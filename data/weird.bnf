@@ -1,0 +1,3 @@
+<char-sequence> ::= "" | <char> <char-sequence>
+
+<char> ::= "\n" | "'" | "\x28" | "\""

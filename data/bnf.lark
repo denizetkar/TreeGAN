@@ -1,0 +1,43 @@
+start: syntax
+syntax         : (comment | rule)+
+comment        : COMMENT_STARTER (LETTER | DIGIT | SYMBOL | APOSTROPHE | QUOT | ESCAPE_CHARACTER)* line_end
+rule           : non_terminal opt_space ASSIGN_OP opt_whitespace expression line_end
+opt_space      : SPACE*
+opt_whitespace : (SPACE | EOL)*
+whitespaces    : (SPACE | EOL) opt_whitespace
+expression     : sequence (opt_whitespace PIPE opt_whitespace sequence)*
+line_end       : (opt_space EOL)+
+sequence       : term (whitespaces term)*
+term           : terminal | non_terminal
+terminal       : QUOT text1 QUOT | APOSTROPHE text2 APOSTROPHE
+text1          : (CHARACTER | APOSTROPHE)*
+text2          : (CHARACTER | QUOT)*
+non_terminal   : LESS rule_text BIGGER
+rule_text      : LETTER RULE_CHAR*
+
+CHARACTER      : LETTER | DIGIT | SYMBOL | ESCAPE_SEQUENCE
+RULE_CHAR      : LETTER | DIGIT | HYPHEN | UNDERSCORE
+
+LETTER         : "A".."Z" | "a".."z"
+DIGIT          : "0".."9"
+SYMBOL         :  " " | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
+
+SPACE: " " | "\t"
+EOL: "\n" | "\r"
+LESS: "<"
+BIGGER: ">"
+ASSIGN_OP: "::="
+PIPE: "|"
+HYPHEN: "-"
+UNDERSCORE: "_"
+APOSTROPHE: "'"
+QUOT: "\""
+COMMENT_STARTER: "//"
+ESCAPE_CHARACTER: "\\"
+
+ESCAPE_SEQUENCE: SIMPLE_ESCAPE_SEQUENCE | HEXADECIMAL_ESCAPE_SEQUENCE | UNIVERSAL_CHARACTER_NAME
+SIMPLE_ESCAPE_SEQUENCE: "\\'" | "\\\"" | "\\?" | "\\\\" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v"
+HEXADECIMAL_ESCAPE_SEQUENCE: "\\x" HEXADECIMAL_DIGIT+
+HEXADECIMAL_DIGIT: "0".."9" | "a".."f" | "A".."F"
+UNIVERSAL_CHARACTER_NAME: "\\u" HEX_QUAD | "\\U" HEX_QUAD HEX_QUAD
+HEX_QUAD: HEXADECIMAL_DIGIT HEXADECIMAL_DIGIT HEXADECIMAL_DIGIT HEXADECIMAL_DIGIT
