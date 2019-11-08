@@ -9,7 +9,7 @@ grammar_file_path = os.path.join('..', 'data', 'lark_files', 'bnf.lark')
 with open(grammar_file_path) as f:
     parser = Lark(f)
 
-text_file_path = os.path.join('..', 'data', 'C_lang.bnf')
+text_file_path = os.path.join('..', 'data', 'reduced_C_lang.bnf')
 with open(text_file_path) as f:
     tree = parser.parse(f.read())
 

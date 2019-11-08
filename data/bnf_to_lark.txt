@@ -1,9 +1,14 @@
+// Upper case letters to lower case letters in non-terminal symbols
 (?<=<[a-zA-Z_-]*)([A-Z]+)(?=[a-zA-Z_-]*>)  -->  '\l$1'
 
+// Replace '-' with '_' in non_terminal symbols
 (?<=<[a-zA-Z_-]+)(-)(?=[a-zA-Z_-]+>)  -->  '_'
 
+// Remove angled brackets from non-terminal symbols
 <([a-zA-Z_]+)>  -->  '$1'
 
+// Replace old rule definition starters '::=' with ':'
 ::= -->  '    :'
 
+// Earley parser does not accept zero length regexp, so fix rules with empty string (using option regexp '?')
 r_opt : "" | r  -->  'r_opt : r?'
