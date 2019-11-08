@@ -1,9 +1,13 @@
 import codecs
+from collections import namedtuple
 import io
 import re
 import sys
 
 import lark
+
+NonTerminal = namedtuple('NonTerminal', ['name'])
+Terminal = namedtuple('Terminal', ['name'])
 
 
 def pretty(tree, stream=None):
@@ -14,7 +18,7 @@ def pretty(tree, stream=None):
 
 
 def pretty_stream(tree, stream, depth=0):
-    indentation = ' ' * depth * 2
+    indentation = '| ' * depth
     if isinstance(tree, lark.Tree):
         print(indentation + tree.data, file=stream)
         for t in tree.children:
@@ -59,6 +63,20 @@ def decode_escapes(s):
         return codecs.decode(match.group(0), 'unicode-escape')
 
     return ESCAPE_SEQUENCE_RE.sub(decode_match, s)
+
+
+def visit(non_terminal, rules_dict):
+    # rules_dict: {NonTerminal : expression}
+    reachable_set = set()
+    visit_stack = [non_terminal]
+    while len(visit_stack) > 0:
+        non_terminal = visit_stack.pop()
+        reachable_set.add(non_terminal)
+        for sequence in rules_dict[non_terminal]:
+            for symbol in sequence:
+                if isinstance(symbol, NonTerminal) and symbol not in reachable_set:
+                    visit_stack.append(symbol)
+    return reachable_set
 
 
 class Vocabulary:

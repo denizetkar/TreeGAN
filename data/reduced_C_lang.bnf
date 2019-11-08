@@ -245,7 +245,7 @@
               | <pp-number> "P" <sign>
               | <pp-number> "."
 
-//- A.2 Phrase structure grammar
+// A.2 Phrase structure grammar
 //  A.2.1 Expressions
 
 <primary-expression> ::= <identifier>
@@ -369,7 +369,7 @@
 <storage-class-specifier> ::= "typedef" | "extern" | "static" | "_Thread_local" | "auto" | "register"
 
 <type-specifier> ::= "void" | "char" | "short" | "int" | "long" | "float" | "double" | "signed" | "unsigned" |
-"_Bool" | "_Complex" | <atomic-type-specifier> | <struct-or-union-specifier> | <enum-specifier> | <typedef-name>
+"_Bool" | "_Complex" | <atomic-type-specifier> | <struct-or-union-specifier> | <enum-specifier>
 
 <struct-or-union-specifier> ::= <struct-or-union> <identifier-opt> "{" <struct-declaration-list> "}"
                               | <struct-or-union> <identifier>
@@ -469,8 +469,6 @@
 <direct-abstract-declarator-opt> "[" <type-qualifier-list> "static" <assignment-expression> "]"  |
 <direct-abstract-declarator-opt> "[*]"                                                           |
 <direct-abstract-declarator-opt> "(" <parameter-type-list-opt> ")"
-
-<typedef-name> ::= <identifier>
 
 <initializer> ::= <assignment-expression>
                 | "{" <initializer-list> "}"
