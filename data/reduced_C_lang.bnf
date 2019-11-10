@@ -49,7 +49,7 @@
 // other implementation-defined characters
 
 <nondigit> ::=
-"-" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" |
+"_" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" |
 "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" |
 "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
 
@@ -347,21 +347,23 @@
 
 //  A.2.2 Declarations
 
-<declaration> ::= <declaration-specifiers> <init-declarator-list-opt> ";" <white-space-character-list-opt>
+<declaration> ::= <declaration-specifiers> <init-declarator-list-opts> ";" <white-space-character-list-opt>
                 | <static_assert-declaration>
 
-<declaration-specifiers-opt> ::= "" | <declaration-specifiers>
+<declaration-specifiers> ::= <storage-class-specifier> <declaration-specifiers-after-white-spaces-opt>
+                           | <type-specifier> <declaration-specifiers-after-white-spaces-opt>
+                           | <type-qualifier> <declaration-specifiers-after-white-spaces-opt>
+                           | <function-specifier> <declaration-specifiers-after-white-spaces-opt>
+                           | <alignment-specifier> <declaration-specifiers-after-white-spaces-opt>
 
-<declaration-specifiers> ::= <storage-class-specifier> <white-space-character-list-opt> <declaration-specifiers-opt>
-                           | <type-specifier> <white-space-character-list-opt> <declaration-specifiers-opt>
-                           | <type-qualifier> <white-space-character-list-opt> <declaration-specifiers-opt>
-                           | <function-specifier> <white-space-character-list-opt> <declaration-specifiers-opt>
-                           | <alignment-specifier> <declaration-specifiers-opt>
+<init-declarator-list-opts> ::= <init-declarator-list>
+                              | <white-space-character-list-opt>
 
-<init-declarator-list-opt> ::= "" | <init-declarator-list>
-
-<init-declarator-list> ::= <init-declarator>
+<init-declarator-list> ::= <left-whitespace-init-declarator>
                          | <init-declarator-list> "," <white-space-character-list-opt> <init-declarator>
+
+<left-whitespace-init-declarator> ::= <left-whitespace-declarator>
+                                    | <left-whitespace-declarator> "=" <white-space-character-list-opt> <initializer>
 
 <init-declarator> ::= <declarator>
                     | <declarator> "=" <white-space-character-list-opt> <initializer>
@@ -371,33 +373,35 @@
 <type-specifier> ::= "void" | "char" | "short" | "int" | "long" | "float" | "double" | "signed" | "unsigned" |
 "_Bool" | "_Complex" | <atomic-type-specifier> | <struct-or-union-specifier> | <enum-specifier>
 
-<struct-or-union-specifier> ::= <struct-or-union> <white-space-character-list-opt> <identifier-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <struct-declaration-list> "}" <white-space-character-list-opt>
-                              | <struct-or-union> <white-space-character-list-opt> <identifier> <white-space-character-list-opt>
+<struct-or-union-specifier> ::= <struct-or-union> <white-space-character-list-opt> <identifier-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <struct-declaration-list> "}"
+                              | <struct-or-union> <white-space-character-list-opt> <identifier>
 
 <struct-or-union> ::= "struct" | "union"
 
 <struct-declaration-list> ::= <struct-declaration>
                             | <struct-declaration-list> <struct-declaration>
 
-<struct-declaration> ::= <specifier-qualifier-list> <struct-declarator-list-opt> ";" <white-space-character-list-opt>
+<struct-declaration> ::= <specifier-qualifier-list> <struct-declarator-list-opts> ";" <white-space-character-list-opt>
                        | <static_assert-declaration>
 
-<specifier-qualifier-list-opt> ::= "" | <specifier-qualifier-list>
+<specifier-qualifier-list> ::= <type-specifier> <specifier-qualifier-list-after-whitespaces-opt>
+                             | <type-qualifier> <specifier-qualifier-list-after-whitespaces-opt>
 
-<specifier-qualifier-list> ::= <type-specifier> <white-space-character-list-opt> <specifier-qualifier-list-opt>
-                             | <type-qualifier> <white-space-character-list-opt> <specifier-qualifier-list-opt>
+<struct-declarator-list-opts> ::= <struct-declarator-list>
+                                | <white-space-character-list-opt>
 
-<struct-declarator-list-opt> ::= "" | <struct-declarator-list>
-
-<struct-declarator-list> ::= <struct-declarator>
+<struct-declarator-list> ::= <left-whitespace-struct-declarator>
                            | <struct-declarator-list> "," <white-space-character-list-opt> <struct-declarator>
+
+<left-whitespace-struct-declarator> ::= <left-whitespace-declarator>
+                                      | <left-whitespace-declarator-opt> ":" <white-space-character-list-opt> <constant-expression>
 
 <struct-declarator> ::= <declarator>
                       | <declarator-opt> ":" <white-space-character-list-opt> <constant-expression>
 
-<enum-specifier> ::= "enum" <white-space-character-list-opt> <identifier-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <enumerator-list> "}" <white-space-character-list-opt>
-                   | "enum" <white-space-character-list-opt> <identifier-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <enumerator-list> "," <white-space-character-list-opt> "}" <white-space-character-list-opt>
-                   | "enum" <white-space-character-list-opt> <identifier> <white-space-character-list-opt>
+<enum-specifier> ::= "enum" <identifier-after-whitespaces-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <enumerator-list> "}"
+                   | "enum" <identifier-after-whitespaces-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <enumerator-list> "," <white-space-character-list-opt> "}"
+                   | "enum" <white-space-character-list> <identifier>
 
 <enumerator-list> ::= <enumerator>
                     | <enumerator-list> "," <white-space-character-list-opt> <enumerator>
@@ -405,14 +409,36 @@
 <enumerator> ::= <enumeration-constant> <white-space-character-list-opt>
                | <enumeration-constant> <white-space-character-list-opt> "=" <white-space-character-list-opt> <constant-expression>
 
-<atomic-type-specifier> ::= "_Atomic(" <white-space-character-list-opt> <type-name> ")" <white-space-character-list-opt>
+<atomic-type-specifier> ::= "_Atomic(" <white-space-character-list-opt> <type-name> ")"
 
 <type-qualifier> ::= "const" | "restrict" | "volatile" | "_Atomic"
 
 <function-specifier> ::= "inline" | "_Noreturn"
 
-<alignment-specifier> ::= "_Alignas(" <white-space-character-list-opt> <type-name> ")" <white-space-character-list-opt>
-                        | "_Alignas(" <white-space-character-list-opt> <constant-expression> ")" <white-space-character-list-opt>
+<alignment-specifier> ::= "_Alignas(" <white-space-character-list-opt> <type-name> ")"
+                        | "_Alignas(" <white-space-character-list-opt> <constant-expression> ")"
+
+<left-whitespace-declarator-opt> ::= "" | <left-whitespace-declarator>
+
+<left-whitespace-declarator> ::= <left-whitespace-pointer-opt> <white-space-character-list> <direct-declarator>
+
+<left-whitespace-pointer-opt> ::= "" | <left-whitespace-pointer>
+
+<left-whitespace-pointer> ::= <left-whitespace-type-qualifier-list-after-whitespaces-opt> <left-whitespace-pointer-asterisk>
+
+<left-whitespace-pointer-asterisk> ::= <white-space-character-list-opt> "*" <left-whitespace-type-qualifier-list-after-whitespacesopt-opt>
+                                     | <white-space-character-list-opt> "*" <left-whitespace-type-qualifier-list-after-whitespacesopt-opt> <left-whitespace-pointer-asterisk>
+
+<left-whitespace-type-qualifier-list-after-whitespacesopt-opt> ::= "" | <left-whitespace-type-qualifier-list-after-whitespacesopt>
+
+<left-whitespace-type-qualifier-list-after-whitespacesopt> ::= <white-space-character-list-opt> <left-whitespace-type-qualifier-list>
+
+<left-whitespace-type-qualifier-list-after-whitespaces-opt> ::= "" | <left-whitespace-type-qualifier-list-after-whitespaces>
+
+<left-whitespace-type-qualifier-list-after-whitespaces> ::= <white-space-character-list> <left-whitespace-type-qualifier-list>
+
+<left-whitespace-type-qualifier-list> ::= <type-qualifier>
+                                        | <type-qualifier> <white-space-character-list> <left-whitespace-type-qualifier-list>
 
 <declarator-opt> ::= "" | <declarator>
 
@@ -421,21 +447,23 @@
 <direct-declarator> ::= <identifier> <white-space-character-list-opt>
                       | "(" <white-space-character-list-opt> <declarator> ")" <white-space-character-list-opt>
                       | <direct-declarator> "[" <white-space-character-list-opt> <type-qualifier-list-opt> <assignment-expression-opt> "]" <white-space-character-list-opt>
-                      | <direct-declarator> "[" <white-space-character-list-opt> "static" <white-space-character-list-opt> <type-qualifier-list-opt> <assignment-expression> "]" <white-space-character-list-opt>
-                      | <direct-declarator> "[" <white-space-character-list-opt> <type-qualifier-list> "static" <white-space-character-list-opt> <assignment-expression> "]" <white-space-character-list-opt>
+                      | <direct-declarator> "[" <white-space-character-list-opt> "static" <white-space-character-list> <type-qualifier-list-opt> <assignment-expression> "]" <white-space-character-list-opt>
+                      | <direct-declarator> "[" <white-space-character-list-opt> <type-qualifier-list> "static" <white-space-character-list> <assignment-expression> "]" <white-space-character-list-opt>
                       | <direct-declarator> "[" <white-space-character-list-opt> <type-qualifier-list-opt> "*" <white-space-character-list-opt> "]" <white-space-character-list-opt>
                       | <direct-declarator> "(" <white-space-character-list-opt> <parameter-type-list> ")" <white-space-character-list-opt>
                       | <direct-declarator> "(" <white-space-character-list-opt> <identifier-list-opt> ")" <white-space-character-list-opt>
 
 <pointer-opt> ::= "" | <pointer>
 
-<pointer> ::= "*" <white-space-character-list-opt> <type-qualifier-list-opt>
-            | "*" <white-space-character-list-opt> <type-qualifier-list-opt> <pointer>
+<pointer> ::= <type-qualifier-list-opt> <pointer-asterisk>
+
+<pointer-asterisk> ::= "*" <white-space-character-list-opt> <type-qualifier-list-opt>
+                     | "*" <white-space-character-list-opt> <type-qualifier-list-opt> <pointer-asterisk>
 
 <type-qualifier-list-opt> ::= "" | <type-qualifier-list>
 
 <type-qualifier-list> ::= <type-qualifier> <white-space-character-list-opt>
-                        | <type-qualifier-list> <type-qualifier> <white-space-character-list-opt>
+                        | <type-qualifier> <white-space-character-list> <type-qualifier-list>
 
 <parameter-type-list-opt> ::= "" | <parameter-type-list>
 
@@ -445,28 +473,29 @@
 <parameter-list> ::= <parameter-declaration>
                    | <parameter-list> "," <white-space-character-list-opt> <parameter-declaration>
 
-<parameter-declaration> ::= <declaration-specifiers> <declarator>
-                          | <declaration-specifiers> <abstract-declarator-opt>
+<parameter-declaration> ::= <declaration-specifiers> <left-whitespace-declarator>
+                          | <declaration-specifiers> <abstract-declarator-opts>
 
 <identifier-list-opt> ::= "" | <identifier-list>
 
 <identifier-list> ::= <identifier> <white-space-character-list-opt>
                     | <identifier-list> "," <white-space-character-list-opt> <identifier> <white-space-character-list-opt>
 
-<type-name> ::= <specifier-qualifier-list> <abstract-declarator-opt>
+<type-name> ::= <specifier-qualifier-list> <abstract-declarator-opts>
 
-<abstract-declarator-opt> ::= "" | <abstract-declarator>
+<abstract-declarator-opts> ::= <abstract-declarator>
+                             | <white-space-character-list-opt>
 
-<abstract-declarator> ::= <pointer>
-                        | <pointer-opt> <direct-abstract-declarator>
+<abstract-declarator> ::= <left-whitespace-pointer> <white-space-character-list-opt>
+                        | <left-whitespace-pointer-opt> <direct-abstract-declarator>
 
 <direct-abstract-declarator-opt> ::= "" | <direct-abstract-declarator>
 
 <direct-abstract-declarator> ::=
 "(" <white-space-character-list-opt> <abstract-declarator> ")" <white-space-character-list-opt> |
 <direct-abstract-declarator-opt> "[" <white-space-character-list-opt> <type-qualifier-list-opt> <assignment-expression-opt> "]" <white-space-character-list-opt> |
-<direct-abstract-declarator-opt> "[" <white-space-character-list-opt> "static" <white-space-character-list-opt> <type-qualifier-list-opt> <assignment-expression> "]" <white-space-character-list-opt> |
-<direct-abstract-declarator-opt> "[" <white-space-character-list-opt> <type-qualifier-list> "static" <white-space-character-list-opt> <assignment-expression> "]" <white-space-character-list-opt> |
+<direct-abstract-declarator-opt> "[" <white-space-character-list-opt> "static" <white-space-character-list> <type-qualifier-list-opt> <assignment-expression> "]" <white-space-character-list-opt> |
+<direct-abstract-declarator-opt> "[" <white-space-character-list-opt> <type-qualifier-list> "static" <white-space-character-list> <assignment-expression> "]" <white-space-character-list-opt> |
 <direct-abstract-declarator-opt> "[" <white-space-character-list-opt> "*" <white-space-character-list-opt> "]" <white-space-character-list-opt> |
 <direct-abstract-declarator-opt> "(" <white-space-character-list-opt> <parameter-type-list-opt> ")" <white-space-character-list-opt>
 
@@ -479,7 +508,7 @@
 
 <designation-opt> ::= "" | <designation>
 
-<designation> ::= <designator-list> "="
+<designation> ::= <designator-list> "=" <white-space-character-list-opt>
 
 <designator-list> ::= <designator>
                     | <designator-list> <designator>
@@ -499,7 +528,7 @@
               | <jump-statement>
 
 <labeled-statement> ::= <identifier> <white-space-character-list-opt> ":" <white-space-character-list-opt> <statement>
-                      | "case" <white-space-character-list-opt> <constant-expression> ":" <white-space-character-list-opt> <statement>
+                      | "case" <white-space-character-list> <constant-expression> ":" <white-space-character-list-opt> <statement>
                       | "default" <white-space-character-list-opt> ":" <white-space-character-list-opt> <statement>
 
 <compound-statement> ::= "{" <white-space-character-list-opt> <block-item-list-opt> "}" <white-space-character-list-opt>
@@ -523,10 +552,10 @@
                         | "for" <white-space-character-list-opt> "(" <white-space-character-list-opt> <expression-opt> ";" <white-space-character-list-opt> <expression-opt> ";" <white-space-character-list-opt> <expression-opt> ")" <white-space-character-list-opt> <statement>
                         | "for" <white-space-character-list-opt> "(" <white-space-character-list-opt> <declaration> <expression-opt> ";" <white-space-character-list-opt> <expression-opt> ")" <white-space-character-list-opt> <statement>
 
-<jump-statement> ::= "goto" <white-space-character-list-opt> <identifier> <white-space-character-list-opt> ";" <white-space-character-list-opt>
+<jump-statement> ::= "goto" <white-space-character-list> <identifier> <white-space-character-list-opt> ";" <white-space-character-list-opt>
                    | "continue" <white-space-character-list-opt> ";" <white-space-character-list-opt>
                    | "break" <white-space-character-list-opt> ";" <white-space-character-list-opt>
-                   | "return" <white-space-character-list-opt> <expression-opt> ";" <white-space-character-list-opt>
+                   | "return" <expression-after-whitespaces-opt> <expression-opt> ";" <white-space-character-list-opt>
 
 //  A.2.4 External definitions
 
@@ -536,7 +565,7 @@
 <external-declaration> ::= <function-definition>
                          | <declaration>
 
-<function-definition> ::= <declaration-specifiers> <declarator> <declaration-list-opt> <compound-statement>
+<function-definition> ::= <declaration-specifiers> <left-whitespace-declarator> <declaration-list-opt> <compound-statement>
 
 <declaration-list-opt> ::= "" | <declaration-list>
 
@@ -603,6 +632,25 @@
 <new-line> ::= "\r\n" | "\n"
 
 // B.1 Whitespace extensions
+//  B.1.x Forced whitespace after certain keywords
+
+<declaration-specifiers-after-white-spaces-opt> ::= "" | <declaration-specifiers-after-white-spaces>
+
+<declaration-specifiers-after-white-spaces> ::= <white-space-character-list> <declaration-specifiers>
+
+<specifier-qualifier-list-after-whitespaces-opt> ::= "" | <specifier-qualifier-list-after-whitespaces>
+
+<specifier-qualifier-list-after-whitespaces> ::= <white-space-character-list> <specifier-qualifier-list>
+
+<identifier-after-whitespaces-opt> ::= "" | <identifier-after-whitespaces>
+
+<identifier-after-whitespaces> ::= <white-space-character-list> <identifier>
+
+<expression-after-whitespaces-opt> ::= "" | <expression-after-whitespaces>
+
+<expression-after-whitespaces> ::= <white-space-character-list> <expression>
+
+//  B.1.x Standard whitespace
 
 <white-space-character-list-opt> ::= "" | <white-space-character-list> <white-space-character-list-opt>
 

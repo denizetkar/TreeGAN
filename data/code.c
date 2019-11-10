@@ -1,6 +1,17 @@
 
-int main()
+struct CR_Register {
+    unsigned intint;
+	unsigned int const*const* ptr;
+	unsigned int prev : 8;
+	unsigned int CLKDIV : 8;
+	unsigned int after : 16;
+};
+
+int* main()
 {
+    struct CR_Register reg;
+    long int const * ** const x;
+    long int* * * const y, const*const* z;
     int i, j, rows;
     printf("Enter number of rows: ");
     scanf("%d",&rows);

@@ -46,7 +46,7 @@ identifier_nondigit     : nondigit
                         | universal_character_name
 // other implementation-defined characters
 
-nondigit     : "-" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q"
+nondigit     : "_" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q"
 | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K"
 | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
 
@@ -339,21 +339,23 @@ constant_expression     : conditional_expression
 
 //  A.2.2 Declarations
 
-declaration     : declaration_specifiers init_declarator_list_opt ";" white_space_character_list_opt
+declaration     : declaration_specifiers init_declarator_list_opts ";" white_space_character_list_opt
                 | static_assert_declaration
 
-declaration_specifiers_opt     : declaration_specifiers?
+declaration_specifiers     : storage_class_specifier declaration_specifiers_after_white_spaces_opt
+                           | type_specifier declaration_specifiers_after_white_spaces_opt
+                           | type_qualifier declaration_specifiers_after_white_spaces_opt
+                           | function_specifier declaration_specifiers_after_white_spaces_opt
+                           | alignment_specifier declaration_specifiers_after_white_spaces_opt
 
-declaration_specifiers     : storage_class_specifier white_space_character_list_opt declaration_specifiers_opt
-                           | type_specifier white_space_character_list_opt declaration_specifiers_opt
-                           | type_qualifier white_space_character_list_opt declaration_specifiers_opt
-                           | function_specifier white_space_character_list_opt declaration_specifiers_opt
-                           | alignment_specifier  declaration_specifiers_opt
+init_declarator_list_opts     : init_declarator_list
+                              | white_space_character_list_opt
 
-init_declarator_list_opt     : init_declarator_list?
-
-init_declarator_list     : init_declarator
+init_declarator_list     : left_whitespace_init_declarator
                          | init_declarator_list "," white_space_character_list_opt init_declarator
+
+left_whitespace_init_declarator     : left_whitespace_declarator
+                                    | left_whitespace_declarator "=" white_space_character_list_opt initializer
 
 init_declarator     : declarator
                     | declarator "=" white_space_character_list_opt initializer
@@ -363,33 +365,35 @@ storage_class_specifier     : "extern" | "static" | "_Thread_local" | "auto" | "
 type_specifier     : "void" | "char" | "short" | "int" | "long" | "float" | "double" | "signed" | "unsigned" | "_Bool"
                    | "_Complex" | atomic_type_specifier | struct_or_union_specifier | enum_specifier
 
-struct_or_union_specifier     : struct_or_union white_space_character_list_opt identifier_opt white_space_character_list_opt "{" white_space_character_list_opt struct_declaration_list "}" white_space_character_list_opt
-                              | struct_or_union white_space_character_list_opt identifier white_space_character_list_opt
+struct_or_union_specifier     : struct_or_union white_space_character_list_opt identifier_opt white_space_character_list_opt "{" white_space_character_list_opt struct_declaration_list "}"
+                              | struct_or_union white_space_character_list_opt identifier
 
 struct_or_union     : "struct" | "union"
 
 struct_declaration_list     : struct_declaration
                             | struct_declaration_list struct_declaration
 
-struct_declaration     : specifier_qualifier_list struct_declarator_list_opt ";" white_space_character_list_opt
+struct_declaration     : specifier_qualifier_list struct_declarator_list_opts ";" white_space_character_list_opt
                        | static_assert_declaration
 
-specifier_qualifier_list_opt     : specifier_qualifier_list?
+specifier_qualifier_list     : type_specifier specifier_qualifier_list_after_whitespaces_opt
+                             | type_qualifier specifier_qualifier_list_after_whitespaces_opt
 
-specifier_qualifier_list     : type_specifier white_space_character_list_opt specifier_qualifier_list_opt
-                             | type_qualifier white_space_character_list_opt specifier_qualifier_list_opt
+struct_declarator_list_opts     : struct_declarator_list
+                                | white_space_character_list_opt
 
-struct_declarator_list_opt     : struct_declarator_list?
-
-struct_declarator_list     : struct_declarator
+struct_declarator_list     : left_whitespace_struct_declarator
                            | struct_declarator_list "," white_space_character_list_opt struct_declarator
+
+left_whitespace_struct_declarator     : left_whitespace_declarator
+                                      | left_whitespace_declarator_opt ":" white_space_character_list_opt constant_expression
 
 struct_declarator     : declarator
                       | declarator_opt ":" white_space_character_list_opt constant_expression
 
-enum_specifier     : "enum" white_space_character_list_opt identifier_opt white_space_character_list_opt "{" white_space_character_list_opt enumerator_list "}" white_space_character_list_opt
-                   | "enum" white_space_character_list_opt identifier_opt white_space_character_list_opt "{" white_space_character_list_opt enumerator_list "," white_space_character_list_opt "}" white_space_character_list_opt
-                   | "enum" white_space_character_list_opt identifier white_space_character_list_opt
+enum_specifier     : "enum" identifier_after_whitespaces_opt white_space_character_list_opt "{" white_space_character_list_opt enumerator_list "}"
+                   | "enum" identifier_after_whitespaces_opt white_space_character_list_opt "{" white_space_character_list_opt enumerator_list "," white_space_character_list_opt "}"
+                   | "enum" white_space_character_list identifier
 
 enumerator_list     : enumerator
                     | enumerator_list "," white_space_character_list_opt enumerator
@@ -397,14 +401,36 @@ enumerator_list     : enumerator
 enumerator     : enumeration_constant white_space_character_list_opt
                | enumeration_constant white_space_character_list_opt "=" white_space_character_list_opt constant_expression
 
-atomic_type_specifier     : "_Atomic(" white_space_character_list_opt type_name ")" white_space_character_list_opt
+atomic_type_specifier     : "_Atomic(" white_space_character_list_opt type_name ")"
 
 type_qualifier     : "const" | "restrict" | "volatile" | "_Atomic"
 
 function_specifier     : "inline" | "_Noreturn"
 
-alignment_specifier     : "_Alignas(" white_space_character_list_opt type_name ")" white_space_character_list_opt
-                        | "_Alignas(" white_space_character_list_opt constant_expression ")" white_space_character_list_opt
+alignment_specifier     : "_Alignas(" white_space_character_list_opt type_name ")"
+                        | "_Alignas(" white_space_character_list_opt constant_expression ")"
+
+left_whitespace_declarator_opt     : left_whitespace_declarator?
+
+left_whitespace_declarator     : left_whitespace_pointer_opt white_space_character_list direct_declarator
+
+left_whitespace_pointer_opt     : left_whitespace_pointer?
+
+left_whitespace_pointer     : left_whitespace_type_qualifier_list_after_whitespaces_opt left_whitespace_pointer_asterisk
+
+left_whitespace_pointer_asterisk     : white_space_character_list_opt "*" left_whitespace_type_qualifier_list_after_whitespacesopt_opt
+                                     | white_space_character_list_opt "*" left_whitespace_type_qualifier_list_after_whitespacesopt_opt left_whitespace_pointer_asterisk
+
+left_whitespace_type_qualifier_list_after_whitespacesopt_opt     : left_whitespace_type_qualifier_list_after_whitespacesopt?
+
+left_whitespace_type_qualifier_list_after_whitespacesopt     : white_space_character_list_opt left_whitespace_type_qualifier_list
+
+left_whitespace_type_qualifier_list_after_whitespaces_opt     : left_whitespace_type_qualifier_list_after_whitespaces?
+
+left_whitespace_type_qualifier_list_after_whitespaces     : white_space_character_list left_whitespace_type_qualifier_list
+
+left_whitespace_type_qualifier_list     : type_qualifier
+                                        | type_qualifier white_space_character_list left_whitespace_type_qualifier_list
 
 declarator_opt     : declarator?
 
@@ -413,21 +439,23 @@ declarator     : pointer_opt direct_declarator
 direct_declarator     : identifier white_space_character_list_opt
                       | "(" white_space_character_list_opt declarator ")" white_space_character_list_opt
                       | direct_declarator "[" white_space_character_list_opt type_qualifier_list_opt assignment_expression_opt "]" white_space_character_list_opt
-                      | direct_declarator "[" white_space_character_list_opt "static" white_space_character_list_opt type_qualifier_list_opt assignment_expression "]" white_space_character_list_opt
-                      | direct_declarator "[" white_space_character_list_opt type_qualifier_list "static" white_space_character_list_opt assignment_expression "]" white_space_character_list_opt
+                      | direct_declarator "[" white_space_character_list_opt "static" white_space_character_list type_qualifier_list_opt assignment_expression "]" white_space_character_list_opt
+                      | direct_declarator "[" white_space_character_list_opt type_qualifier_list "static" white_space_character_list assignment_expression "]" white_space_character_list_opt
                       | direct_declarator "[" white_space_character_list_opt type_qualifier_list_opt "*" white_space_character_list_opt "]" white_space_character_list_opt
                       | direct_declarator "(" white_space_character_list_opt parameter_type_list ")" white_space_character_list_opt
                       | direct_declarator "(" white_space_character_list_opt identifier_list_opt ")" white_space_character_list_opt
 
 pointer_opt     : pointer?
 
-pointer     : "*" white_space_character_list_opt type_qualifier_list_opt
-            | "*" white_space_character_list_opt type_qualifier_list_opt pointer
+pointer     : type_qualifier_list_opt pointer_asterisk
+
+pointer_asterisk     : "*" white_space_character_list_opt type_qualifier_list_opt
+                     | "*" white_space_character_list_opt type_qualifier_list_opt pointer_asterisk
 
 type_qualifier_list_opt     : type_qualifier_list?
 
 type_qualifier_list     : type_qualifier white_space_character_list_opt
-                        | type_qualifier_list type_qualifier white_space_character_list_opt
+                        | type_qualifier white_space_character_list type_qualifier_list
 
 parameter_type_list_opt     : parameter_type_list?
 
@@ -437,27 +465,28 @@ parameter_type_list     : parameter_list
 parameter_list     : parameter_declaration
                    | parameter_list "," white_space_character_list_opt parameter_declaration
 
-parameter_declaration     : declaration_specifiers declarator
-                          | declaration_specifiers abstract_declarator_opt
+parameter_declaration     : declaration_specifiers left_whitespace_declarator
+                          | declaration_specifiers abstract_declarator_opts
 
 identifier_list_opt     : identifier_list?
 
 identifier_list     : identifier white_space_character_list_opt
                     | identifier_list "," white_space_character_list_opt identifier white_space_character_list_opt
 
-type_name     : specifier_qualifier_list abstract_declarator_opt
+type_name     : specifier_qualifier_list abstract_declarator_opts
 
-abstract_declarator_opt     : abstract_declarator?
+abstract_declarator_opts     : abstract_declarator
+                             | white_space_character_list_opt
 
-abstract_declarator     : pointer
-                        | pointer_opt direct_abstract_declarator
+abstract_declarator     : left_whitespace_pointer white_space_character_list_opt
+                        | left_whitespace_pointer_opt direct_abstract_declarator
 
 direct_abstract_declarator_opt     : direct_abstract_declarator?
 
 direct_abstract_declarator     : "(" white_space_character_list_opt abstract_declarator ")" white_space_character_list_opt
                                | direct_abstract_declarator_opt "[" white_space_character_list_opt type_qualifier_list_opt assignment_expression_opt "]" white_space_character_list_opt
-                               | direct_abstract_declarator_opt "[" white_space_character_list_opt "static" white_space_character_list_opt type_qualifier_list_opt assignment_expression "]" white_space_character_list_opt
-                               | direct_abstract_declarator_opt "[" white_space_character_list_opt type_qualifier_list "static" white_space_character_list_opt assignment_expression "]" white_space_character_list_opt
+                               | direct_abstract_declarator_opt "[" white_space_character_list_opt "static" white_space_character_list type_qualifier_list_opt assignment_expression "]" white_space_character_list_opt
+                               | direct_abstract_declarator_opt "[" white_space_character_list_opt type_qualifier_list "static" white_space_character_list assignment_expression "]" white_space_character_list_opt
                                | direct_abstract_declarator_opt "[" white_space_character_list_opt "*" white_space_character_list_opt "]" white_space_character_list_opt
                                | direct_abstract_declarator_opt "(" white_space_character_list_opt parameter_type_list_opt ")" white_space_character_list_opt
 
@@ -490,7 +519,7 @@ statement     : labeled_statement
               | jump_statement
 
 labeled_statement     : identifier white_space_character_list_opt ":" white_space_character_list_opt statement
-                      | "case" white_space_character_list_opt constant_expression ":" white_space_character_list_opt statement
+                      | "case" white_space_character_list constant_expression ":" white_space_character_list_opt statement
                       | "default" white_space_character_list_opt ":" white_space_character_list_opt statement
 
 compound_statement     : "{" white_space_character_list_opt block_item_list_opt "}" white_space_character_list_opt
@@ -514,10 +543,10 @@ iteration_statement     : "while" white_space_character_list_opt "(" white_space
                         | "for" white_space_character_list_opt "(" white_space_character_list_opt expression_opt ";" white_space_character_list_opt expression_opt ";" white_space_character_list_opt expression_opt ")" white_space_character_list_opt statement
                         | "for" white_space_character_list_opt "(" white_space_character_list_opt declaration expression_opt ";" white_space_character_list_opt expression_opt ")" white_space_character_list_opt statement
 
-jump_statement     : "goto" white_space_character_list_opt identifier white_space_character_list_opt ";" white_space_character_list_opt
+jump_statement     : "goto" white_space_character_list identifier white_space_character_list_opt ";" white_space_character_list_opt
                    | "continue" white_space_character_list_opt ";" white_space_character_list_opt
                    | "break" white_space_character_list_opt ";" white_space_character_list_opt
-                   | "return" white_space_character_list_opt expression_opt ";" white_space_character_list_opt
+                   | "return" expression_after_whitespaces_opt ";" white_space_character_list_opt
 
 //  A.2.4 External definitions
 
@@ -527,7 +556,7 @@ translation_unit     : external_declaration
 external_declaration     : function_definition
                          | declaration
 
-function_definition     : declaration_specifiers declarator declaration_list_opt compound_statement
+function_definition     : declaration_specifiers left_whitespace_declarator declaration_list_opt compound_statement
 
 declaration_list_opt     : declaration_list?
 
@@ -594,6 +623,25 @@ pp_tokens     : preprocessing_token
 new_line     : "\r\n" | "\n"
 
 // B.1 Whitespace extensions
+//  B.1.x Forced whitespace after certain keywords
+
+declaration_specifiers_after_white_spaces_opt     : declaration_specifiers_after_white_spaces?
+
+declaration_specifiers_after_white_spaces     : white_space_character_list declaration_specifiers
+
+specifier_qualifier_list_after_whitespaces_opt     : specifier_qualifier_list_after_whitespaces?
+
+specifier_qualifier_list_after_whitespaces     : white_space_character_list specifier_qualifier_list
+
+identifier_after_whitespaces_opt     : identifier_after_whitespaces?
+
+identifier_after_whitespaces     : white_space_character_list identifier
+
+expression_after_whitespaces_opt     : expression_after_whitespaces?
+
+expression_after_whitespaces     : white_space_character_list expression
+
+//  B.1.x Standard whitespace
 
 white_space_character_list_opt     : white_space_character_list?
 
