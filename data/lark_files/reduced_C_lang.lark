@@ -12,19 +12,7 @@ token     : keyword
           | string_literal
           | punctuator
 
-preprocessing_token     : header_name
-                        | identifier
-                        | pp_number
-                        | character_constant
-                        | string_literal
-                        | punctuator
-                        | non_white_space_character
-
-non_white_space_character     : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o"
-| "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I"
-| "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2"
-| "3" | "4" | "5" | "6" | "7" | "8" | "9" | "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-"
-| "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "\\" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
+non_white_space_character     : "$" | "@" | "\\" | "`"
 
 //  A.1.2 Keywords
 
@@ -197,10 +185,10 @@ s_char     : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "
 
 //  A.1.7 Punctuators
 
-punctuator     : "[" | "]" | "(" | ")" | "{" | "}" | "." | "->" | "++" | "--" | "&" | "*" | "+" | "-" | "~" | "!" | "/"
-| "%" | "<<" | ">>" | "<" | ">" | "<=" | ">=" | "==" | "!=" | "^" | "|" | "&&" | "||" | "?" | ":" | ";" | "..." | "="
-| "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | "&=" | "^=" | "|=" | "," | "#" | "##" | "<:" | ":>" | "<%" | "%>"
-| "%:" | "%:%:"
+punctuator     : "%:%:" | "..." | "<<=" | ">>=" | "->" | "++" | "--" | "<<" | "<=" | ">=" | "==" | "!=" | ">>" | "&&"
+| "||" | "*=" | "/=" | "%=" | "+=" | "-=" | "&=" | "^=" | "|=" | "##" | "<:" | ":>" | "<%" | "%>" | "%:" | "[" | "]"
+| "(" | ")" | "{" | "}" | "." | "&" | "*" | "+" | "-" | "~" | "!" | "/" | "%" | "<" | ">" | "^" | "|" | "?" | ":" | ";"
+| "=" | ","
 
 //  A.1.8 Header names
 
@@ -570,57 +558,88 @@ preprocessing_file     : group_opt
 group_opt     : group?
 
 group     : group_part
-          | group group_part
+          | group new_line white_space_character_list_opt group_part
 
 group_part     : if_section
                | control_line
                | text_line
-               | "#" non_directive
 
 if_section     : if_group elif_groups_opt else_group_opt endif_line
 
-if_group     : "#if" constant_expression new_line group_opt
-             | "#ifdef" identifier new_line group_opt
-             | "#ifndef" identifier new_line group_opt
+if_group     : "#if(" constant_expression ")" space_character_list_opt new_line white_space_character_list_opt group_opt
+             | "#if" space_character_list constant_expression new_line white_space_character_list_opt group_opt
+             | "#ifdef" space_character_list identifier space_character_list_opt new_line white_space_character_list_opt group_opt
+             | "#ifndef" space_character_list identifier space_character_list_opt new_line white_space_character_list_opt group_opt
 
 elif_groups_opt     : elif_groups?
 
 elif_groups     : elif_group
                 | elif_groups elif_group
 
-elif_group     : "#elif" constant_expression new_line group_opt
+elif_group     : "#elif" space_character_list constant_expression new_line white_space_character_list_opt group_opt
 
 else_group_opt     : else_group?
 
-else_group     : "#else" new_line group_opt
+else_group     : "#else" space_character_list_opt new_line white_space_character_list_opt group_opt
 
-endif_line     : "#endif" new_line
+endif_line     : "#endif" space_character_list_opt
 
-control_line     : "#include" pp_tokens new_line
-                 | "#define" identifier replacement_list new_line
-                 | "#define" identifier lparen identifier_list_opt ")" replacement_list new_line
-                 | "#define" identifier lparen "...)" replacement_list new_line
-                 | "#define" identifier lparen identifier_list ",...)" replacement_list new_line
-                 | "#undef" identifier new_line
-                 | "#line" pp_tokens new_line
-                 | "#error" pp_tokens_opt new_line
-                 | "#pragma" pp_tokens_opt new_line
-                 | "#" new_line
+control_line     : "#include" space_character_list_opt header_name space_character_list_opt
+                 | "#define" space_character_list identifier replacement_list space_character_list_opt
+                 | "#define" space_character_list identifier lparen space_character_list_opt pp_identifier_list_opt ")" replacement_list space_character_list_opt
+                 | "#define" space_character_list identifier lparen space_character_list_opt "..." space_character_list_opt ")" replacement_list space_character_list_opt
+                 | "#define" space_character_list identifier lparen space_character_list_opt pp_identifier_list "," space_character_list_opt "..." space_character_list_opt ")" replacement_list space_character_list_opt
+                 | "#undef" space_character_list identifier space_character_list_opt
+                 | "#error" pp_tokens_after_space_opt space_character_list_opt
+                 | "#pragma" pp_tokens_after_space_opt space_character_list_opt
+                 | "#" space_character_list_opt
 
-text_line     : pp_tokens_opt new_line
-
-non_directive     : pp_tokens new_line
+text_line     : space_character_list_opt pp_tokens_opt space_character_list_opt
 
 lparen     : "("
 
-replacement_list     : pp_tokens_opt
+replacement_list     : pp_tokens_after_space_opt
+
+pp_tokens_after_space_opt     : pp_tokens_after_space?
+
+pp_tokens_after_space     : space_character_list pp_tokens
 
 pp_tokens_opt     : pp_tokens?
 
-pp_tokens     : preprocessing_token
-              | pp_tokens preprocessing_token
+pp_tokens     : header_name pp_tokens_after_type_a_opt
+              | identifier pp_tokens_after_type_b_opt
+              | pp_number pp_tokens_after_type_b_opt
+              | character_constant pp_tokens_after_type_a_opt
+              | string_literal pp_tokens_after_type_a_opt
+              | punctuator pp_tokens_after_type_a_opt
+              | non_white_space_character pp_tokens_after_type_a_opt
+
+pp_tokens_after_type_a_opt     : pp_tokens_after_type_a?
+
+pp_tokens_after_type_a     : space_character_list_opt header_name pp_tokens_after_type_a_opt
+                           | space_character_list_opt identifier pp_tokens_after_type_b_opt
+                           | space_character_list_opt pp_number pp_tokens_after_type_b_opt
+                           | space_character_list_opt character_constant pp_tokens_after_type_a_opt
+                           | space_character_list_opt string_literal pp_tokens_after_type_a_opt
+                           | space_character_list_opt punctuator pp_tokens_after_type_a_opt
+                           | space_character_list_opt non_white_space_character pp_tokens_after_type_a_opt
+
+pp_tokens_after_type_b_opt     : pp_tokens_after_type_b?
+
+pp_tokens_after_type_b     : space_character_list_opt header_name pp_tokens_after_type_a_opt
+                           | space_character_list identifier pp_tokens_after_type_b_opt
+                           | space_character_list pp_number pp_tokens_after_type_b_opt
+                           | space_character_list_opt character_constant pp_tokens_after_type_a_opt
+                           | space_character_list_opt string_literal pp_tokens_after_type_a_opt
+                           | space_character_list_opt punctuator pp_tokens_after_type_a_opt
+                           | space_character_list_opt non_white_space_character pp_tokens_after_type_a_opt
 
 new_line     : "\r\n" | "\n"
+
+pp_identifier_list_opt     : pp_identifier_list?
+
+pp_identifier_list     : identifier space_character_list_opt
+                       | pp_identifier_list "," space_character_list_opt identifier space_character_list_opt
 
 // B.1 Whitespace extensions
 //  B.1.x Forced whitespace after certain keywords
@@ -650,5 +669,10 @@ white_space_character_list     : white_space_character
 
 white_space_character     : space_character
                           | new_line
+
+space_character_list_opt     : space_character_list?
+
+space_character_list     : space_character
+                         | space_character space_character_list
 
 space_character     : " " | "\t"

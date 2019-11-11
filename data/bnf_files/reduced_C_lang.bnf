@@ -1,7 +1,7 @@
-<start> ::= <white-space-character-list-opt> <translation-unit>
-//        | <white-space-character-list-opt> <preprocessing-file>
-//        | <start> <translation-unit>
-//        | <start> <preprocessing-file>
+<start> ::= <white_space_character_list_opt> <translation_unit>
+//        | <white_space_character_list_opt> <preprocessing_file>
+//        | <start> <translation_unit>
+//        | <start> <preprocessing_file>
 
 // A.1 Lexical grammar
 //  A.1.1 Lexical elements
@@ -9,655 +9,670 @@
 <token> ::= <keyword>
           | <identifier>
           | <constant>
-          | <string-literal>
+          | <string_literal>
           | <punctuator>
 
-<preprocessing-token> ::= <header-name>
-                        | <identifier>
-                        | <pp-number>
-                        | <character-constant>
-                        | <string-literal>
-                        | <punctuator>
-                        | <non-white-space-character>
-
-<non-white-space-character> ::=
-"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
-"u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" |
-"O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
-"8" | "9" | "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" |
-"=" | ">" | "?" | "@" | "[" | "\\" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
+<non_white_space_character> ::= "$" | "@" | "\\" | "`"
 
 //  A.1.2 Keywords
 
-<keyword> ::=
-"auto" | "break" | "case" | "char" | "const" | "continue" | "default" | "do" | "double" | "else" | "enum" |
-"extern" | "float" | "for" | "goto" | "if" | "inline" | "int" | "long" | "register" | "restrict" | "return" | "short" |
-"signed" | "sizeof" | "static" | "struct" | "switch" | "union" | "unsigned" | "void" | "volatile" | "while" |
-"_Alignas" | "_Alignof" | "_Atomic" | "_Bool" | "_Complex" | "_Generic" | "_Imaginary" | "_Noreturn" |
-"_Static_assert" | "_Thread_local"
+<keyword> ::= "auto" | "break" | "case" | "char" | "const" | "continue" | "default" | "do" | "double" | "else" | "enum"
+| "extern" | "float" | "for" | "goto" | "if" | "inline" | "int" | "long" | "register" | "restrict" | "return" | "short"
+| "signed" | "sizeof" | "static" | "struct" | "switch" | "union" | "unsigned" | "void" | "volatile" | "while"
+| "_Alignas" | "_Alignof" | "_Atomic" | "_Bool" | "_Complex" | "_Generic" | "_Imaginary" | "_Noreturn"
+| "_Static_assert" | "_Thread_local"
 
 //  A.1.3 Identifiers
 
-<identifier-opt> ::= "" | <identifier>
+<identifier_opt> ::= "" | <identifier>
 
-<identifier> ::= <identifier-nondigit>
-               | <identifier> <identifier-nondigit>
+<identifier> ::= <identifier_nondigit>
+               | <identifier> <identifier_nondigit>
                | <identifier> <digit>
 
-<identifier-nondigit> ::= <nondigit>
-                        | <universal-character-name>
+<identifier_nondigit> ::= <nondigit>
+                        | <universal_character_name>
 // other implementation-defined characters
 
-<nondigit> ::=
-"_" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" |
-"t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" |
-"N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+<nondigit> ::= "_" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q"
+| "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K"
+| "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
 
 <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
 //  A.1.4 Universal character names
 
-<universal-character-name> ::= "\\u" <hex-quad>
-                             | "\\U" <hex-quad> <hex-quad>
+<universal_character_name> ::= "\\u" <hex_quad>
+                             | "\\U" <hex_quad> <hex_quad>
 
-<hex-quad> ::= <hexadecimal-digit> <hexadecimal-digit> <hexadecimal-digit> <hexadecimal-digit>
+<hex_quad> ::= <hexadecimal_digit> <hexadecimal_digit> <hexadecimal_digit> <hexadecimal_digit>
 
 //  A.1.5 Constants
 
-<constant> ::= <integer-constant>
-             | <floating-constant>
-             | <enumeration-constant>
-             | <character-constant>
+<constant> ::= <integer_constant>
+             | <floating_constant>
+             | <enumeration_constant>
+             | <character_constant>
 
-<integer-constant> ::= <decimal-constant> <integer-suffix-opt>
-                     | <octal-constant> <integer-suffix-opt>
-                     | <hexadecimal-constant> <integer-suffix-opt>
+<integer_constant> ::= <decimal_constant> <integer_suffix_opt>
+                     | <octal_constant> <integer_suffix_opt>
+                     | <hexadecimal_constant> <integer_suffix_opt>
 
-<decimal-constant> ::= <nonzero-digit>
-                     | <decimal-constant> <digit>
+<decimal_constant> ::= <nonzero_digit>
+                     | <decimal_constant> <digit>
 
-<octal-constant> ::= "0"
-                   | <octal-constant> <octal-digit>
+<octal_constant> ::= "0"
+                   | <octal_constant> <octal_digit>
 
-<hexadecimal-constant> ::= <hexadecimal-prefix> <hexadecimal-digit>
-                         | <hexadecimal-constant> <hexadecimal-digit>
+<hexadecimal_constant> ::= <hexadecimal_prefix> <hexadecimal_digit>
+                         | <hexadecimal_constant> <hexadecimal_digit>
 
-<hexadecimal-prefix> ::= "0x" | "0X"
+<hexadecimal_prefix> ::= "0x" | "0X"
 
-<nonzero-digit> ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<nonzero_digit> ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
-<octal-digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7"
+<octal_digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7"
 
-<hexadecimal-digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<hexadecimal_digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
                       | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F"
 
-<integer-suffix-opt> ::= "" | <integer-suffix>
+<integer_suffix_opt> ::= "" | <integer_suffix>
 
-<integer-suffix> ::= <unsigned-suffix> <long-suffix-opt>
-                   | <unsigned-suffix> <long-long-suffix>
-                   | <long-suffix> <unsigned-suffix-opt>
-                   | <long-long-suffix> <unsigned-suffix-opt>
+<integer_suffix> ::= <unsigned_suffix> <long_suffix_opt>
+                   | <unsigned_suffix> <long_long_suffix>
+                   | <long_suffix> <unsigned_suffix_opt>
+                   | <long_long_suffix> <unsigned_suffix_opt>
 
-<unsigned-suffix-opt> ::= "" | <unsigned-suffix>
+<unsigned_suffix_opt> ::= "" | <unsigned_suffix>
 
-<unsigned-suffix> ::= "u" | "U"
+<unsigned_suffix> ::= "u" | "U"
 
-<long-suffix-opt> ::= "" | <long-suffix>
+<long_suffix_opt> ::= "" | <long_suffix>
 
-<long-suffix> ::= "l" | "L"
+<long_suffix> ::= "l" | "L"
 
-<long-long-suffix> ::= "ll" | "LL"
+<long_long_suffix> ::= "ll" | "LL"
 
-<floating-constant> ::= <decimal-floating-constant>
-                      | <hexadecimal-floating-constant>
+<floating_constant> ::= <decimal_floating_constant>
+                      | <hexadecimal_floating_constant>
 
-<decimal-floating-constant> ::= <fractional-constant> <exponent-part-opt> <floating-suffix-opt>
-                              | <digit-sequence> <exponent-part> <floating-suffix-opt>
+<decimal_floating_constant> ::= <fractional_constant> <exponent_part_opt> <floating_suffix_opt>
+                              | <digit_sequence> <exponent_part> <floating_suffix_opt>
 
-<hexadecimal-floating-constant> ::=
-<hexadecimal-prefix> <hexadecimal-fractional-constant> <binary-exponent-part> <floating-suffix-opt> |
-<hexadecimal-prefix> <hexadecimal-digit-sequence> <binary-exponent-part> <floating-suffix-opt>
+<hexadecimal_floating_constant> ::= <hexadecimal_prefix> <hexadecimal_fractional_constant> <binary_exponent_part> <floating_suffix_opt>
+                                  | <hexadecimal_prefix> <hexadecimal_digit_sequence> <binary_exponent_part> <floating_suffix_opt>
 
-<fractional-constant> ::= <digit-sequence-opt> "." <digit-sequence>
-                        | <digit-sequence> "."
+<fractional_constant> ::= <digit_sequence_opt> "." <digit_sequence>
+                        | <digit_sequence> "."
 
-<exponent-part-opt> ::= "" | <exponent-part>
+<exponent_part_opt> ::= "" | <exponent_part>
 
-<exponent-part> ::= "e" <sign-opt> <digit-sequence>
-                  | "E" <sign-opt> <digit-sequence>
+<exponent_part> ::= "e" <sign_opt> <digit_sequence>
+                  | "E" <sign_opt> <digit_sequence>
 
-<sign-opt> ::= "" | <sign>
+<sign_opt> ::= "" | <sign>
 
 <sign> ::= "+" | "-"
 
-<digit-sequence-opt> ::= "" | <digit-sequence>
+<digit_sequence_opt> ::= "" | <digit_sequence>
 
-<digit-sequence> ::= <digit>
-                   | <digit-sequence> <digit>
+<digit_sequence> ::= <digit>
+                   | <digit_sequence> <digit>
 
-<hexadecimal-fractional-constant> ::= <hexadecimal-digit-sequence-opt> "." <hexadecimal-digit-sequence>
-                                    | <hexadecimal-digit-sequence> "."
+<hexadecimal_fractional_constant> ::= <hexadecimal_digit_sequence_opt> "." <hexadecimal_digit_sequence>
+                                    | <hexadecimal_digit_sequence> "."
 
-<binary-exponent-part> ::= "p" <sign-opt> <digit-sequence>
-                         | "P" <sign-opt> <digit-sequence>
+<binary_exponent_part> ::= "p" <sign_opt> <digit_sequence>
+                         | "P" <sign_opt> <digit_sequence>
 
-<hexadecimal-digit-sequence-opt> ::= "" | <hexadecimal-digit-sequence>
+<hexadecimal_digit_sequence_opt> ::= "" | <hexadecimal_digit_sequence>
 
-<hexadecimal-digit-sequence> ::= <hexadecimal-digit>
-                               | <hexadecimal-digit-sequence> <hexadecimal-digit>
+<hexadecimal_digit_sequence> ::= <hexadecimal_digit>
+                               | <hexadecimal_digit_sequence> <hexadecimal_digit>
 
-<floating-suffix-opt> ::= "" | <floating-suffix>
+<floating_suffix_opt> ::= "" | <floating_suffix>
 
-<floating-suffix> ::= "f" | "l" | "F" | "L"
+<floating_suffix> ::= "f" | "l" | "F" | "L"
 
-<enumeration-constant> ::= <identifier>
+<enumeration_constant> ::= <identifier>
 
-<character-constant> ::= "'" <c-char-sequence> "'"
-                       | "L'" <c-char-sequence> "'"
-                       | "u'" <c-char-sequence> "'"
-                       | "U'" <c-char-sequence> "'"
+<character_constant> ::= "'" <c_char_sequence> "'"
+                       | "L'" <c_char_sequence> "'"
+                       | "u'" <c_char_sequence> "'"
+                       | "U'" <c_char_sequence> "'"
 
-<c-char-sequence> ::= <c-char>
-                    | <c-char-sequence> <c-char>
+<c_char_sequence> ::= <c_char>
+                    | <c_char_sequence> <c_char>
 
-<c-char> ::=
-"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
-"u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" |
-"O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
-"8" | "9" | " " | "!" | "\"" | "#" | "$" | "%" | "&" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" |
-"=" | ">" | "?" | "@" | "[" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~" | <escape-sequence>
+<c_char> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r"
+| "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L"
+| "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5"
+| "6" | "7" | "8" | "9" | " " | "!" | "\"" | "#" | "$" | "%" | "&" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":"
+| ";" | "<" | "=" | ">" | "?" | "@" | "[" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~" | <escape_sequence>
 
-<escape-sequence> ::= <simple-escape-sequence>
-                    | <octal-escape-sequence>
-                    | <hexadecimal-escape-sequence>
-                    | <universal-character-name>
+<escape_sequence> ::= <simple_escape_sequence>
+                    | <octal_escape_sequence>
+                    | <hexadecimal_escape_sequence>
+                    | <universal_character_name>
 
-<simple-escape-sequence> ::= "\\'" | "\\\"" | "\\?" | "\\\\" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v"
+<simple_escape_sequence> ::= "\\'" | "\\\"" | "\\?" | "\\\\" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v"
 
-<octal-escape-sequence> ::= "\\" <octal-digit>
-                          | "\\" <octal-digit> <octal-digit>
-                          | "\\" <octal-digit> <octal-digit> <octal-digit>
+<octal_escape_sequence> ::= "\\" <octal_digit>
+                          | "\\" <octal_digit> <octal_digit>
+                          | "\\" <octal_digit> <octal_digit> <octal_digit>
 
-<hexadecimal-escape-sequence> ::= "\\x" <hexadecimal-digit>
-                                | <hexadecimal-escape-sequence> <hexadecimal-digit>
+<hexadecimal_escape_sequence> ::= "\\x" <hexadecimal_digit>
+                                | <hexadecimal_escape_sequence> <hexadecimal_digit>
 
 //  A.1.6 String literals
 
-<string-literal> ::= <encoding-prefix-opt> "\"" <s-char-sequence-opt> "\""
+<string_literal> ::= <encoding_prefix_opt> "\"" <s_char_sequence_opt> "\""
 
-<encoding-prefix-opt> ::= "" | <encoding-prefix>
+<encoding_prefix_opt> ::= "" | <encoding_prefix>
 
-<encoding-prefix> ::= "u8" | "u" | "U" | "L"
+<encoding_prefix> ::= "u8" | "u" | "U" | "L"
 
-<s-char-sequence-opt> ::= "" | <s-char-sequence>
+<s_char_sequence_opt> ::= "" | <s_char_sequence>
 
-<s-char-sequence> ::= <s-char>
-                    | <s-char-sequence> <s-char>
+<s_char_sequence> ::= <s_char>
+                    | <s_char_sequence> <s_char>
 
-<s-char> ::=
-"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
-"u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" |
-"O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
-"8" | "9" | " " | "!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" |
-"=" | ">" | "?" | "@" | "[" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~" | <escape-sequence>
+<s_char> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r"
+| "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L"
+| "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5"
+| "6" | "7" | "8" | "9" | " " | "!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":"
+| ";" | "<" | "=" | ">" | "?" | "@" | "[" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~" | <escape_sequence>
 
 //  A.1.7 Punctuators
 
-<punctuator> ::= "[" | "]" | "(" | ")" | "{" | "}" | "." | "->" | "++" | "--" | "&" | "*" | "+" | "-" | "~" | "!" |
-"/" | "%" | "<<" | ">>" | "<" | ">" | "<=" | ">=" | "==" | "!=" | "^" | "|" | "&&" | "||" | "?" | ":" | ";" | "..." |
-"=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | "&=" | "^=" | "|=" | "," | "#" | "##" | "<:" | ":>" | "<%" |
-"%>" | "%:" | "%:%:"
+<punctuator> ::= "%:%:" | "..." | "<<=" | ">>=" | "->" | "++" | "--" | "<<" | "<=" | ">=" | "==" | "!=" | ">>" | "&&"
+| "||" | "*=" | "/=" | "%=" | "+=" | "-=" | "&=" | "^=" | "|=" | "##" | "<:" | ":>" | "<%" | "%>" | "%:" | "[" | "]"
+| "(" | ")" | "{" | "}" | "." | "&" | "*" | "+" | "-" | "~" | "!" | "/" | "%" | "<" | ">" | "^" | "|" | "?" | ":" | ";"
+| "=" | ","
 
 //  A.1.8 Header names
 
-<header-name> ::= "<" <h-char-sequence> ">"
-                | "\"" <q-char-sequence> "\""
+<header_name> ::= "<" <h_char_sequence> ">"
+                | "\"" <q_char_sequence> "\""
 
-<h-char-sequence> ::= <h-char>
-                    | <h-char-sequence> <h-char>
+<h_char_sequence> ::= <h_char>
+                    | <h_char_sequence> <h_char>
 
-<h-char> ::=
-"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
-"u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" |
-"O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
-"8" | "9" | " " | "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" |
-"<" | "=" | "?" | "@" | "[" | "\\" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
+<h_char> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r"
+| "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L"
+| "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5"
+| "6" | "7" | "8" | "9" | " " | "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/"
+| ":" | ";" | "<" | "=" | "?" | "@" | "[" | "\\" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
 
-<q-char-sequence> ::= <q-char>
-                    | <q-char-sequence> <q-char>
+<q_char_sequence> ::= <q_char>
+                    | <q_char_sequence> <q_char>
 
-<q-char> ::=
-"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
-"u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" |
-"O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
-"8" | "9" | " " | "!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" |
-"=" | ">" | "?" | "@" | "[" | "\\" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
+<q_char> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r"
+| "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L"
+| "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "0" | "1" | "2" | "3" | "4" | "5"
+| "6" | "7" | "8" | "9" | " " | "!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":"
+| ";" | "<" | "=" | ">" | "?" | "@" | "[" | "\\" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
 
 //  A.1.9 Preprocessing numbers
 
-<pp-number> ::= <digit>
+<pp_number> ::= <digit>
               | "." <digit>
-              | <pp-number> <digit>
-              | <pp-number> <identifier-nondigit>
-              | <pp-number> "e" <sign>
-              | <pp-number> "E" <sign>
-              | <pp-number> "p" <sign>
-              | <pp-number> "P" <sign>
-              | <pp-number> "."
+              | <pp_number> <digit>
+              | <pp_number> <identifier_nondigit>
+              | <pp_number> "e" <sign>
+              | <pp_number> "E" <sign>
+              | <pp_number> "p" <sign>
+              | <pp_number> "P" <sign>
+              | <pp_number> "."
 
 // A.2 Phrase structure grammar
 //  A.2.1 Expressions
 
-<primary-expression> ::= <identifier> <white-space-character-list-opt>
-                       | <constant> <white-space-character-list-opt>
-                       | <string-literal> <white-space-character-list-opt>
-                       | "(" <white-space-character-list-opt> <expression> ")" <white-space-character-list-opt>
-                       | <generic-selection>
+<primary_expression> ::= <identifier> <white_space_character_list_opt>
+                       | <constant> <white_space_character_list_opt>
+                       | <string_literal> <white_space_character_list_opt>
+                       | "(" <white_space_character_list_opt> <expression> ")" <white_space_character_list_opt>
+                       | <generic_selection>
 
-<generic-selection> ::= "_Generic(" <white-space-character-list-opt> <assignment-expression> "," <white-space-character-list-opt> <generic-assoc-list> ")" <white-space-character-list-opt>
+<generic_selection> ::= "_Generic(" <white_space_character_list_opt> <assignment_expression> "," <white_space_character_list_opt> <generic_assoc_list> ")" <white_space_character_list_opt>
 
-<generic-assoc-list> ::= <generic-association>
-                       | <generic-assoc-list> "," <white-space-character-list-opt> <generic-association>
+<generic_assoc_list> ::= <generic_association>
+                       | <generic_assoc_list> "," <white_space_character_list_opt> <generic_association>
 
-<generic-association> ::= <type-name> ":" <white-space-character-list-opt> <assignment-expression>
-                        | "default" <white-space-character-list-opt> ":" <white-space-character-list-opt> <assignment-expression>
+<generic_association> ::= <type_name> ":" <white_space_character_list_opt> <assignment_expression>
+                        | "default" <white_space_character_list_opt> ":" <white_space_character_list_opt> <assignment_expression>
 
-<postfix-expression> ::= <primary-expression>
-                       | <postfix-expression> "[" <white-space-character-list-opt> <expression> "]" <white-space-character-list-opt>
-                       | <postfix-expression> "(" <white-space-character-list-opt> <argument-expression-list-opt> ")" <white-space-character-list-opt>
-                       | <postfix-expression> "." <white-space-character-list-opt> <identifier> <white-space-character-list-opt>
-                       | <postfix-expression> "->" <white-space-character-list-opt> <identifier> <white-space-character-list-opt>
-                       | <postfix-expression> "++" <white-space-character-list-opt>
-                       | <postfix-expression> "--" <white-space-character-list-opt>
-                       | "(" <white-space-character-list-opt> <type-name> ")" <white-space-character-list-opt> "{" <white-space-character-list-opt> <initializer-list> "}" <white-space-character-list-opt>
-                       | "(" <white-space-character-list-opt> <type-name> ")" <white-space-character-list-opt> "{" <white-space-character-list-opt> <initializer-list> "," <white-space-character-list-opt> "}" <white-space-character-list-opt>
+<postfix_expression> ::= <primary_expression>
+                       | <postfix_expression> "[" <white_space_character_list_opt> <expression> "]" <white_space_character_list_opt>
+                       | <postfix_expression> "(" <white_space_character_list_opt> <argument_expression_list_opt> ")" <white_space_character_list_opt>
+                       | <postfix_expression> "." <white_space_character_list_opt> <identifier> <white_space_character_list_opt>
+                       | <postfix_expression> "->" <white_space_character_list_opt> <identifier> <white_space_character_list_opt>
+                       | <postfix_expression> "++" <white_space_character_list_opt>
+                       | <postfix_expression> "--" <white_space_character_list_opt>
+                       | "(" <white_space_character_list_opt> <type_name> ")" <white_space_character_list_opt> "{" <white_space_character_list_opt> <initializer_list> "}" <white_space_character_list_opt>
+                       | "(" <white_space_character_list_opt> <type_name> ")" <white_space_character_list_opt> "{" <white_space_character_list_opt> <initializer_list> "," <white_space_character_list_opt> "}" <white_space_character_list_opt>
 
-<argument-expression-list-opt> ::= "" | <argument-expression-list>
+<argument_expression_list_opt> ::= "" | <argument_expression_list>
 
-<argument-expression-list> ::= <assignment-expression>
-                             | <argument-expression-list> "," <white-space-character-list-opt> <assignment-expression>
+<argument_expression_list> ::= <assignment_expression>
+                             | <argument_expression_list> "," <white_space_character_list_opt> <assignment_expression>
 
-<unary-expression> ::= <postfix-expression>
-                     | "++" <white-space-character-list-opt> <unary-expression>
-                     | "--" <white-space-character-list-opt> <unary-expression>
-                     | <unary-operator> <white-space-character-list-opt> <cast-expression>
-                     | "sizeof" <white-space-character-list-opt> <unary-expression>
-                     | "sizeof" <white-space-character-list-opt> "(" <white-space-character-list-opt> <type-name> ")" <white-space-character-list-opt>
-                     | "_Alignof(" <white-space-character-list-opt> <type-name> ")" <white-space-character-list-opt>
+<unary_expression> ::= <postfix_expression>
+                     | "++" <white_space_character_list_opt> <unary_expression>
+                     | "--" <white_space_character_list_opt> <unary_expression>
+                     | <unary_operator> <white_space_character_list_opt> <cast_expression>
+                     | "sizeof" <white_space_character_list_opt> <unary_expression>
+                     | "sizeof" <white_space_character_list_opt> "(" <white_space_character_list_opt> <type_name> ")" <white_space_character_list_opt>
+                     | "_Alignof(" <white_space_character_list_opt> <type_name> ")" <white_space_character_list_opt>
 
-<unary-operator> ::= "&" | "*" | "+" | "-" | "~" | "!"
+<unary_operator> ::= "&" | "*" | "+" | "-" | "~" | "!"
 
-<cast-expression> ::= <unary-expression>
-                    | "(" <white-space-character-list-opt> <type-name> ")" <white-space-character-list-opt> <cast-expression>
+<cast_expression> ::= <unary_expression>
+                    | "(" <white_space_character_list_opt> <type_name> ")" <white_space_character_list_opt> <cast_expression>
 
-<multiplicative-expression> ::= <cast-expression>
-                              | <multiplicative-expression> "*" <white-space-character-list-opt> <cast-expression>
-                              | <multiplicative-expression> "/" <white-space-character-list-opt> <cast-expression>
-                              | <multiplicative-expression> "%" <white-space-character-list-opt> <cast-expression>
+<multiplicative_expression> ::= <cast_expression>
+                              | <multiplicative_expression> "*" <white_space_character_list_opt> <cast_expression>
+                              | <multiplicative_expression> "/" <white_space_character_list_opt> <cast_expression>
+                              | <multiplicative_expression> "%" <white_space_character_list_opt> <cast_expression>
 
-<additive-expression> ::= <multiplicative-expression>
-                        | <additive-expression> "+" <white-space-character-list-opt> <multiplicative-expression>
-                        | <additive-expression> "-" <white-space-character-list-opt> <multiplicative-expression>
+<additive_expression> ::= <multiplicative_expression>
+                        | <additive_expression> "+" <white_space_character_list_opt> <multiplicative_expression>
+                        | <additive_expression> "-" <white_space_character_list_opt> <multiplicative_expression>
 
-<shift-expression> ::= <additive-expression>
-                     | <shift-expression> "<<" <white-space-character-list-opt> <additive-expression>
-                     | <shift-expression> ">>" <white-space-character-list-opt> <additive-expression>
+<shift_expression> ::= <additive_expression>
+                     | <shift_expression> "<<" <white_space_character_list_opt> <additive_expression>
+                     | <shift_expression> ">>" <white_space_character_list_opt> <additive_expression>
 
-<relational-expression> ::= <shift-expression>
-                          | <relational-expression> "<" <white-space-character-list-opt> <shift-expression>
-                          | <relational-expression> ">" <white-space-character-list-opt> <shift-expression>
-                          | <relational-expression> "<=" <white-space-character-list-opt> <shift-expression>
-                          | <relational-expression> ">=" <white-space-character-list-opt> <shift-expression>
+<relational_expression> ::= <shift_expression>
+                          | <relational_expression> "<" <white_space_character_list_opt> <shift_expression>
+                          | <relational_expression> ">" <white_space_character_list_opt> <shift_expression>
+                          | <relational_expression> "<=" <white_space_character_list_opt> <shift_expression>
+                          | <relational_expression> ">=" <white_space_character_list_opt> <shift_expression>
 
-<equality-expression> ::= <relational-expression>
-                        | <equality-expression> "==" <white-space-character-list-opt> <relational-expression>
-                        | <equality-expression> "!=" <white-space-character-list-opt> <relational-expression>
+<equality_expression> ::= <relational_expression>
+                        | <equality_expression> "==" <white_space_character_list_opt> <relational_expression>
+                        | <equality_expression> "!=" <white_space_character_list_opt> <relational_expression>
 
-<AND-expression> ::= <equality-expression>
-                   | <AND-expression> "&" <white-space-character-list-opt> <equality-expression>
+<AND_expression> ::= <equality_expression>
+                   | <AND_expression> "&" <white_space_character_list_opt> <equality_expression>
 
-<exclusive-OR-expression> ::= <AND-expression>
-                            | <exclusive-OR-expression> "^" <white-space-character-list-opt> <AND-expression>
+<exclusive_OR_expression> ::= <AND_expression>
+                            | <exclusive_OR_expression> "^" <white_space_character_list_opt> <AND_expression>
 
-<inclusive-OR-expression> ::= <exclusive-OR-expression>
-                            | <inclusive-OR-expression> "|" <white-space-character-list-opt> <exclusive-OR-expression>
+<inclusive_OR_expression> ::= <exclusive_OR_expression>
+                            | <inclusive_OR_expression> "|" <white_space_character_list_opt> <exclusive_OR_expression>
 
-<logical-AND-expression> ::= <inclusive-OR-expression>
-                           | <logical-AND-expression> "&&" <white-space-character-list-opt> <inclusive-OR-expression>
+<logical_AND_expression> ::= <inclusive_OR_expression>
+                           | <logical_AND_expression> "&&" <white_space_character_list_opt> <inclusive_OR_expression>
 
-<logical-OR-expression> ::= <logical-AND-expression>
-                          | <logical-OR-expression> "||" <white-space-character-list-opt> <logical-AND-expression>
+<logical_OR_expression> ::= <logical_AND_expression>
+                          | <logical_OR_expression> "||" <white_space_character_list_opt> <logical_AND_expression>
 
-<conditional-expression> ::= <logical-OR-expression>
-                           | <logical-OR-expression> "?" <white-space-character-list-opt> <expression> ":" <white-space-character-list-opt> <conditional-expression>
+<conditional_expression> ::= <logical_OR_expression>
+                           | <logical_OR_expression> "?" <white_space_character_list_opt> <expression> ":" <white_space_character_list_opt> <conditional_expression>
 
-<assignment-expression-opt> ::= "" | <assignment-expression>
+<assignment_expression_opt> ::= "" | <assignment_expression>
 
-<assignment-expression> ::= <conditional-expression>
-                          | <unary-expression> <assignment-operator> <white-space-character-list-opt> <assignment-expression>
+<assignment_expression> ::= <conditional_expression>
+                          | <unary_expression> <assignment_operator> <white_space_character_list_opt> <assignment_expression>
 
-<assignment-operator> ::= "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | "&=" | "^=" | "|="
+<assignment_operator> ::= "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | "&=" | "^=" | "|="
 
-<expression-opt> ::= "" | <expression>
+<expression_opt> ::= "" | <expression>
 
-<expression> ::= <assignment-expression>
-               | <expression> "," <white-space-character-list-opt> <assignment-expression>
+<expression> ::= <assignment_expression>
+               | <expression> "," <white_space_character_list_opt> <assignment_expression>
 
-<constant-expression> ::= <conditional-expression>
+<constant_expression> ::= <conditional_expression>
 
 //  A.2.2 Declarations
 
-<declaration> ::= <declaration-specifiers> <init-declarator-list-opts> ";" <white-space-character-list-opt>
-                | <static_assert-declaration>
+<declaration> ::= <declaration_specifiers> <init_declarator_list_opts> ";" <white_space_character_list_opt>
+                | <static_assert_declaration>
 
-<declaration-specifiers> ::= <storage-class-specifier> <declaration-specifiers-after-white-spaces-opt>
-                           | <type-specifier> <declaration-specifiers-after-white-spaces-opt>
-                           | <type-qualifier> <declaration-specifiers-after-white-spaces-opt>
-                           | <function-specifier> <declaration-specifiers-after-white-spaces-opt>
-                           | <alignment-specifier> <declaration-specifiers-after-white-spaces-opt>
+<declaration_specifiers> ::= <storage_class_specifier> <declaration_specifiers_after_white_spaces_opt>
+                           | <type_specifier> <declaration_specifiers_after_white_spaces_opt>
+                           | <type_qualifier> <declaration_specifiers_after_white_spaces_opt>
+                           | <function_specifier> <declaration_specifiers_after_white_spaces_opt>
+                           | <alignment_specifier> <declaration_specifiers_after_white_spaces_opt>
 
-<init-declarator-list-opts> ::= <init-declarator-list>
-                              | <white-space-character-list-opt>
+<init_declarator_list_opts> ::= <init_declarator_list>
+                              | <white_space_character_list_opt>
 
-<init-declarator-list> ::= <left-whitespace-init-declarator>
-                         | <init-declarator-list> "," <white-space-character-list-opt> <init-declarator>
+<init_declarator_list> ::= <left_whitespace_init_declarator>
+                         | <init_declarator_list> "," <white_space_character_list_opt> <init_declarator>
 
-<left-whitespace-init-declarator> ::= <left-whitespace-declarator>
-                                    | <left-whitespace-declarator> "=" <white-space-character-list-opt> <initializer>
+<left_whitespace_init_declarator> ::= <left_whitespace_declarator>
+                                    | <left_whitespace_declarator> "=" <white_space_character_list_opt> <initializer>
 
-<init-declarator> ::= <declarator>
-                    | <declarator> "=" <white-space-character-list-opt> <initializer>
+<init_declarator> ::= <declarator>
+                    | <declarator> "=" <white_space_character_list_opt> <initializer>
 
-<storage-class-specifier> ::= "extern" | "static" | "_Thread_local" | "auto" | "register"
+<storage_class_specifier> ::= "extern" | "static" | "_Thread_local" | "auto" | "register"
 
-<type-specifier> ::= "void" | "char" | "short" | "int" | "long" | "float" | "double" | "signed" | "unsigned" |
-"_Bool" | "_Complex" | <atomic-type-specifier> | <struct-or-union-specifier> | <enum-specifier>
+<type_specifier> ::=  "void" | "char" | "short" | "int" | "long" | "float" | "double" | "signed" | "unsigned" | "_Bool"
+                   | "_Complex" | <atomic_type_specifier> | <struct_or_union_specifier> | <enum_specifier>
 
-<struct-or-union-specifier> ::= <struct-or-union> <white-space-character-list-opt> <identifier-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <struct-declaration-list> "}"
-                              | <struct-or-union> <white-space-character-list-opt> <identifier>
+<struct_or_union_specifier> ::= <struct_or_union> <white_space_character_list_opt> <identifier_opt> <white_space_character_list_opt> "{" <white_space_character_list_opt> <struct_declaration_list> "}"
+                              | <struct_or_union> <white_space_character_list_opt> <identifier>
 
-<struct-or-union> ::= "struct" | "union"
+<struct_or_union> ::= "struct" | "union"
 
-<struct-declaration-list> ::= <struct-declaration>
-                            | <struct-declaration-list> <struct-declaration>
+<struct_declaration_list> ::= <struct_declaration>
+                            | <struct_declaration_list> <struct_declaration>
 
-<struct-declaration> ::= <specifier-qualifier-list> <struct-declarator-list-opts> ";" <white-space-character-list-opt>
-                       | <static_assert-declaration>
+<struct_declaration> ::= <specifier_qualifier_list> <struct_declarator_list_opts> ";" <white_space_character_list_opt>
+                       | <static_assert_declaration>
 
-<specifier-qualifier-list> ::= <type-specifier> <specifier-qualifier-list-after-whitespaces-opt>
-                             | <type-qualifier> <specifier-qualifier-list-after-whitespaces-opt>
+<specifier_qualifier_list> ::= <type_specifier> <specifier_qualifier_list_after_whitespaces_opt>
+                             | <type_qualifier> <specifier_qualifier_list_after_whitespaces_opt>
 
-<struct-declarator-list-opts> ::= <struct-declarator-list>
-                                | <white-space-character-list-opt>
+<struct_declarator_list_opts> ::= <struct_declarator_list>
+                                | <white_space_character_list_opt>
 
-<struct-declarator-list> ::= <left-whitespace-struct-declarator>
-                           | <struct-declarator-list> "," <white-space-character-list-opt> <struct-declarator>
+<struct_declarator_list> ::= <left_whitespace_struct_declarator>
+                           | <struct_declarator_list> "," <white_space_character_list_opt> <struct_declarator>
 
-<left-whitespace-struct-declarator> ::= <left-whitespace-declarator>
-                                      | <left-whitespace-declarator-opt> ":" <white-space-character-list-opt> <constant-expression>
+<left_whitespace_struct_declarator> ::= <left_whitespace_declarator>
+                                      | <left_whitespace_declarator_opt> ":" <white_space_character_list_opt> <constant_expression>
 
-<struct-declarator> ::= <declarator>
-                      | <declarator-opt> ":" <white-space-character-list-opt> <constant-expression>
+<struct_declarator> ::= <declarator>
+                      | <declarator_opt> ":" <white_space_character_list_opt> <constant_expression>
 
-<enum-specifier> ::= "enum" <identifier-after-whitespaces-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <enumerator-list> "}"
-                   | "enum" <identifier-after-whitespaces-opt> <white-space-character-list-opt> "{" <white-space-character-list-opt> <enumerator-list> "," <white-space-character-list-opt> "}"
-                   | "enum" <white-space-character-list> <identifier>
+<enum_specifier> ::= "enum" <identifier_after_whitespaces_opt> <white_space_character_list_opt> "{" <white_space_character_list_opt> <enumerator_list> "}"
+                   | "enum" <identifier_after_whitespaces_opt> <white_space_character_list_opt> "{" <white_space_character_list_opt> <enumerator_list> "," <white_space_character_list_opt> "}"
+                   | "enum" <white_space_character_list> <identifier>
 
-<enumerator-list> ::= <enumerator>
-                    | <enumerator-list> "," <white-space-character-list-opt> <enumerator>
+<enumerator_list> ::= <enumerator>
+                    | <enumerator_list> "," <white_space_character_list_opt> <enumerator>
 
-<enumerator> ::= <enumeration-constant> <white-space-character-list-opt>
-               | <enumeration-constant> <white-space-character-list-opt> "=" <white-space-character-list-opt> <constant-expression>
+<enumerator> ::= <enumeration_constant> <white_space_character_list_opt>
+               | <enumeration_constant> <white_space_character_list_opt> "=" <white_space_character_list_opt> <constant_expression>
 
-<atomic-type-specifier> ::= "_Atomic(" <white-space-character-list-opt> <type-name> ")"
+<atomic_type_specifier> ::= "_Atomic(" <white_space_character_list_opt> <type_name> ")"
 
-<type-qualifier> ::= "const" | "restrict" | "volatile" | "_Atomic"
+<type_qualifier> ::= "const" | "restrict" | "volatile" | "_Atomic"
 
-<function-specifier> ::= "inline" | "_Noreturn"
+<function_specifier> ::= "inline" | "_Noreturn"
 
-<alignment-specifier> ::= "_Alignas(" <white-space-character-list-opt> <type-name> ")"
-                        | "_Alignas(" <white-space-character-list-opt> <constant-expression> ")"
+<alignment_specifier> ::= "_Alignas(" <white_space_character_list_opt> <type_name> ")"
+                        | "_Alignas(" <white_space_character_list_opt> <constant_expression> ")"
 
-<left-whitespace-declarator-opt> ::= "" | <left-whitespace-declarator>
+<left_whitespace_declarator_opt> ::= "" | <left_whitespace_declarator>
 
-<left-whitespace-declarator> ::= <left-whitespace-pointer-opt> <white-space-character-list> <direct-declarator>
+<left_whitespace_declarator> ::= <left_whitespace_pointer_opt> <white_space_character_list> <direct_declarator>
 
-<left-whitespace-pointer-opt> ::= "" | <left-whitespace-pointer>
+<left_whitespace_pointer_opt> ::= "" | <left_whitespace_pointer>
 
-<left-whitespace-pointer> ::= <left-whitespace-type-qualifier-list-after-whitespaces-opt> <left-whitespace-pointer-asterisk>
+<left_whitespace_pointer> ::= <left_whitespace_type_qualifier_list_after_whitespaces_opt> <left_whitespace_pointer_asterisk>
 
-<left-whitespace-pointer-asterisk> ::= <white-space-character-list-opt> "*" <left-whitespace-type-qualifier-list-after-whitespacesopt-opt>
-                                     | <white-space-character-list-opt> "*" <left-whitespace-type-qualifier-list-after-whitespacesopt-opt> <left-whitespace-pointer-asterisk>
+<left_whitespace_pointer_asterisk> ::= <white_space_character_list_opt> "*" <left_whitespace_type_qualifier_list_after_whitespacesopt_opt>
+                                     | <white_space_character_list_opt> "*" <left_whitespace_type_qualifier_list_after_whitespacesopt_opt> <left_whitespace_pointer_asterisk>
 
-<left-whitespace-type-qualifier-list-after-whitespacesopt-opt> ::= "" | <left-whitespace-type-qualifier-list-after-whitespacesopt>
+<left_whitespace_type_qualifier_list_after_whitespacesopt_opt> ::= "" | <left_whitespace_type_qualifier_list_after_whitespacesopt>
 
-<left-whitespace-type-qualifier-list-after-whitespacesopt> ::= <white-space-character-list-opt> <left-whitespace-type-qualifier-list>
+<left_whitespace_type_qualifier_list_after_whitespacesopt> ::= <white_space_character_list_opt> <left_whitespace_type_qualifier_list>
 
-<left-whitespace-type-qualifier-list-after-whitespaces-opt> ::= "" | <left-whitespace-type-qualifier-list-after-whitespaces>
+<left_whitespace_type_qualifier_list_after_whitespaces_opt> ::= "" | <left_whitespace_type_qualifier_list_after_whitespaces>
 
-<left-whitespace-type-qualifier-list-after-whitespaces> ::= <white-space-character-list> <left-whitespace-type-qualifier-list>
+<left_whitespace_type_qualifier_list_after_whitespaces> ::= <white_space_character_list> <left_whitespace_type_qualifier_list>
 
-<left-whitespace-type-qualifier-list> ::= <type-qualifier>
-                                        | <type-qualifier> <white-space-character-list> <left-whitespace-type-qualifier-list>
+<left_whitespace_type_qualifier_list> ::= <type_qualifier>
+                                        | <type_qualifier> <white_space_character_list> <left_whitespace_type_qualifier_list>
 
-<declarator-opt> ::= "" | <declarator>
+<declarator_opt> ::= "" | <declarator>
 
-<declarator> ::= <pointer-opt> <direct-declarator>
+<declarator> ::= <pointer_opt> <direct_declarator>
 
-<direct-declarator> ::= <identifier> <white-space-character-list-opt>
-                      | "(" <white-space-character-list-opt> <declarator> ")" <white-space-character-list-opt>
-                      | <direct-declarator> "[" <white-space-character-list-opt> <type-qualifier-list-opt> <assignment-expression-opt> "]" <white-space-character-list-opt>
-                      | <direct-declarator> "[" <white-space-character-list-opt> "static" <white-space-character-list> <type-qualifier-list-opt> <assignment-expression> "]" <white-space-character-list-opt>
-                      | <direct-declarator> "[" <white-space-character-list-opt> <type-qualifier-list> "static" <white-space-character-list> <assignment-expression> "]" <white-space-character-list-opt>
-                      | <direct-declarator> "[" <white-space-character-list-opt> <type-qualifier-list-opt> "*" <white-space-character-list-opt> "]" <white-space-character-list-opt>
-                      | <direct-declarator> "(" <white-space-character-list-opt> <parameter-type-list> ")" <white-space-character-list-opt>
-                      | <direct-declarator> "(" <white-space-character-list-opt> <identifier-list-opt> ")" <white-space-character-list-opt>
+<direct_declarator> ::= <identifier> <white_space_character_list_opt>
+                      | "(" <white_space_character_list_opt> <declarator> ")" <white_space_character_list_opt>
+                      | <direct_declarator> "[" <white_space_character_list_opt> <type_qualifier_list_opt> <assignment_expression_opt> "]" <white_space_character_list_opt>
+                      | <direct_declarator> "[" <white_space_character_list_opt> "static" <white_space_character_list> <type_qualifier_list_opt> <assignment_expression> "]" <white_space_character_list_opt>
+                      | <direct_declarator> "[" <white_space_character_list_opt> <type_qualifier_list> "static" <white_space_character_list> <assignment_expression> "]" <white_space_character_list_opt>
+                      | <direct_declarator> "[" <white_space_character_list_opt> <type_qualifier_list_opt> "*" <white_space_character_list_opt> "]" <white_space_character_list_opt>
+                      | <direct_declarator> "(" <white_space_character_list_opt> <parameter_type_list> ")" <white_space_character_list_opt>
+                      | <direct_declarator> "(" <white_space_character_list_opt> <identifier_list_opt> ")" <white_space_character_list_opt>
 
-<pointer-opt> ::= "" | <pointer>
+<pointer_opt> ::= "" | <pointer>
 
-<pointer> ::= <type-qualifier-list-opt> <pointer-asterisk>
+<pointer> ::= <type_qualifier_list_opt> <pointer_asterisk>
 
-<pointer-asterisk> ::= "*" <white-space-character-list-opt> <type-qualifier-list-opt>
-                     | "*" <white-space-character-list-opt> <type-qualifier-list-opt> <pointer-asterisk>
+<pointer_asterisk> ::= "*" <white_space_character_list_opt> <type_qualifier_list_opt>
+                     | "*" <white_space_character_list_opt> <type_qualifier_list_opt> <pointer_asterisk>
 
-<type-qualifier-list-opt> ::= "" | <type-qualifier-list>
+<type_qualifier_list_opt> ::= "" | <type_qualifier_list>
 
-<type-qualifier-list> ::= <type-qualifier> <white-space-character-list-opt>
-                        | <type-qualifier> <white-space-character-list> <type-qualifier-list>
+<type_qualifier_list> ::= <type_qualifier> <white_space_character_list_opt>
+                        | <type_qualifier> <white_space_character_list> <type_qualifier_list>
 
-<parameter-type-list-opt> ::= "" | <parameter-type-list>
+<parameter_type_list_opt> ::= "" | <parameter_type_list>
 
-<parameter-type-list> ::= <parameter-list>
-                        | <parameter-list> "," <white-space-character-list-opt> "..." <white-space-character-list-opt>
+<parameter_type_list> ::= <parameter_list>
+                        | <parameter_list> "," <white_space_character_list_opt> "..." <white_space_character_list_opt>
 
-<parameter-list> ::= <parameter-declaration>
-                   | <parameter-list> "," <white-space-character-list-opt> <parameter-declaration>
+<parameter_list> ::= <parameter_declaration>
+                   | <parameter_list> "," <white_space_character_list_opt> <parameter_declaration>
 
-<parameter-declaration> ::= <declaration-specifiers> <left-whitespace-declarator>
-                          | <declaration-specifiers> <abstract-declarator-opts>
+<parameter_declaration> ::= <declaration_specifiers> <left_whitespace_declarator>
+                          | <declaration_specifiers> <abstract_declarator_opts>
 
-<identifier-list-opt> ::= "" | <identifier-list>
+<identifier_list_opt> ::= "" | <identifier_list>
 
-<identifier-list> ::= <identifier> <white-space-character-list-opt>
-                    | <identifier-list> "," <white-space-character-list-opt> <identifier> <white-space-character-list-opt>
+<identifier_list> ::= <identifier> <white_space_character_list_opt>
+                    | <identifier_list> "," <white_space_character_list_opt> <identifier> <white_space_character_list_opt>
 
-<type-name> ::= <specifier-qualifier-list> <abstract-declarator-opts>
+<type_name> ::= <specifier_qualifier_list> <abstract_declarator_opts>
 
-<abstract-declarator-opts> ::= <abstract-declarator>
-                             | <white-space-character-list-opt>
+<abstract_declarator_opts> ::= <abstract_declarator>
+                             | <white_space_character_list_opt>
 
-<abstract-declarator> ::= <left-whitespace-pointer> <white-space-character-list-opt>
-                        | <left-whitespace-pointer-opt> <direct-abstract-declarator>
+<abstract_declarator> ::= <left_whitespace_pointer> <white_space_character_list_opt>
+                        | <left_whitespace_pointer_opt> <direct_abstract_declarator>
 
-<direct-abstract-declarator-opt> ::= "" | <direct-abstract-declarator>
+<direct_abstract_declarator_opt> ::= "" | <direct_abstract_declarator>
 
-<direct-abstract-declarator> ::=
-"(" <white-space-character-list-opt> <abstract-declarator> ")" <white-space-character-list-opt> |
-<direct-abstract-declarator-opt> "[" <white-space-character-list-opt> <type-qualifier-list-opt> <assignment-expression-opt> "]" <white-space-character-list-opt> |
-<direct-abstract-declarator-opt> "[" <white-space-character-list-opt> "static" <white-space-character-list> <type-qualifier-list-opt> <assignment-expression> "]" <white-space-character-list-opt> |
-<direct-abstract-declarator-opt> "[" <white-space-character-list-opt> <type-qualifier-list> "static" <white-space-character-list> <assignment-expression> "]" <white-space-character-list-opt> |
-<direct-abstract-declarator-opt> "[" <white-space-character-list-opt> "*" <white-space-character-list-opt> "]" <white-space-character-list-opt> |
-<direct-abstract-declarator-opt> "(" <white-space-character-list-opt> <parameter-type-list-opt> ")" <white-space-character-list-opt>
+<direct_abstract_declarator> ::= "(" <white_space_character_list_opt> <abstract_declarator> ")" <white_space_character_list_opt>
+                               | <direct_abstract_declarator_opt> "[" <white_space_character_list_opt> <type_qualifier_list_opt> <assignment_expression_opt> "]" <white_space_character_list_opt>
+                               | <direct_abstract_declarator_opt> "[" <white_space_character_list_opt> "static" <white_space_character_list> <type_qualifier_list_opt> <assignment_expression> "]" <white_space_character_list_opt>
+                               | <direct_abstract_declarator_opt> "[" <white_space_character_list_opt> <type_qualifier_list> "static" <white_space_character_list> <assignment_expression> "]" <white_space_character_list_opt>
+                               | <direct_abstract_declarator_opt> "[" <white_space_character_list_opt> "*" <white_space_character_list_opt> "]" <white_space_character_list_opt>
+                               | <direct_abstract_declarator_opt> "(" <white_space_character_list_opt> <parameter_type_list_opt> ")" <white_space_character_list_opt>
 
-<initializer> ::= <assignment-expression>
-                | "{" <white-space-character-list-opt> <initializer-list> "}" <white-space-character-list-opt>
-                | "{" <white-space-character-list-opt> <initializer-list> "," <white-space-character-list-opt> "}" <white-space-character-list-opt>
+<initializer> ::= <assignment_expression>
+                | "{" <white_space_character_list_opt> <initializer_list> "}" <white_space_character_list_opt>
+                | "{" <white_space_character_list_opt> <initializer_list> "," <white_space_character_list_opt> "}" <white_space_character_list_opt>
 
-<initializer-list> ::= <designation-opt> <initializer>
-                     | <initializer-list> "," <white-space-character-list-opt> <designation-opt> <initializer>
+<initializer_list> ::= <designation_opt> <initializer>
+                     | <initializer_list> "," <white_space_character_list_opt> <designation_opt> <initializer>
 
-<designation-opt> ::= "" | <designation>
+<designation_opt> ::= "" | <designation>
 
-<designation> ::= <designator-list> "=" <white-space-character-list-opt>
+<designation> ::= <designator_list> "=" <white_space_character_list_opt>
 
-<designator-list> ::= <designator>
-                    | <designator-list> <designator>
+<designator_list> ::= <designator>
+                    | <designator_list> <designator>
 
-<designator> ::= "[" <white-space-character-list-opt> <constant-expression> "]" <white-space-character-list-opt>
-               | "." <white-space-character-list-opt> <identifier> <white-space-character-list-opt>
+<designator> ::= "[" <white_space_character_list_opt> <constant_expression> "]" <white_space_character_list_opt>
+               | "." <white_space_character_list_opt> <identifier> <white_space_character_list_opt>
 
-<static_assert-declaration> ::= "_Static_assert(" <white-space-character-list-opt> <constant-expression> "," <white-space-character-list-opt> <string-literal> <white-space-character-list-opt> ")" <white-space-character-list-opt> ";" <white-space-character-list-opt>
+<static_assert_declaration> ::= "_Static_assert(" <white_space_character_list_opt> <constant_expression> "," <white_space_character_list_opt> <string_literal> <white_space_character_list_opt> ")" <white_space_character_list_opt> ";" <white_space_character_list_opt>
 
 //  A.2.3 Statements
 
-<statement> ::= <labeled-statement>
-              | <compound-statement>
-              | <expression-statement>
-              | <selection-statement>
-              | <iteration-statement>
-              | <jump-statement>
+<statement> ::= <labeled_statement>
+              | <compound_statement>
+              | <expression_statement>
+              | <selection_statement>
+              | <iteration_statement>
+              | <jump_statement>
 
-<labeled-statement> ::= <identifier> <white-space-character-list-opt> ":" <white-space-character-list-opt> <statement>
-                      | "case" <white-space-character-list> <constant-expression> ":" <white-space-character-list-opt> <statement>
-                      | "default" <white-space-character-list-opt> ":" <white-space-character-list-opt> <statement>
+<labeled_statement> ::= <identifier> <white_space_character_list_opt> ":" <white_space_character_list_opt> <statement>
+                      | "case" <white_space_character_list> <constant_expression> ":" <white_space_character_list_opt> <statement>
+                      | "default" <white_space_character_list_opt> ":" <white_space_character_list_opt> <statement>
 
-<compound-statement> ::= "{" <white-space-character-list-opt> <block-item-list-opt> "}" <white-space-character-list-opt>
+<compound_statement> ::= "{" <white_space_character_list_opt> <block_item_list_opt> "}" <white_space_character_list_opt>
 
-<block-item-list-opt> ::= "" | <block-item-list>
+<block_item_list_opt> ::= "" | <block_item_list>
 
-<block-item-list> ::= <block-item>
-                    | <block-item-list> <block-item>
+<block_item_list> ::= <block_item>
+                    | <block_item_list> <block_item>
 
-<block-item> ::= <declaration>
+<block_item> ::= <declaration>
                | <statement>
 
-<expression-statement> ::= <expression-opt> ";" <white-space-character-list-opt>
+<expression_statement> ::= <expression_opt> ";" <white_space_character_list_opt>
 
-<selection-statement> ::= "if" <white-space-character-list-opt> "(" <white-space-character-list-opt> <expression> ")" <white-space-character-list-opt> <statement>
-                        | "if" <white-space-character-list-opt> "(" <white-space-character-list-opt> <expression> ")" <white-space-character-list-opt> <statement> "else" <white-space-character-list-opt> <statement>
-                        | "switch" <white-space-character-list-opt> "(" <white-space-character-list-opt> <expression> ")" <white-space-character-list-opt> <statement>
+<selection_statement> ::= "if" <white_space_character_list_opt> "(" <white_space_character_list_opt> <expression> ")" <white_space_character_list_opt> <statement>
+                        | "if" <white_space_character_list_opt> "(" <white_space_character_list_opt> <expression> ")" <white_space_character_list_opt> <statement> "else" <white_space_character_list_opt> <statement>
+                        | "switch" <white_space_character_list_opt> "(" <white_space_character_list_opt> <expression> ")" <white_space_character_list_opt> <statement>
 
-<iteration-statement> ::= "while" <white-space-character-list-opt> "(" <white-space-character-list-opt> <expression> ")" <white-space-character-list-opt> <statement>
-                        | "do" <white-space-character-list-opt> <statement> "while" <white-space-character-list-opt> "(" <white-space-character-list-opt> <expression> ")" <white-space-character-list-opt> ";" <white-space-character-list-opt>
-                        | "for" <white-space-character-list-opt> "(" <white-space-character-list-opt> <expression-opt> ";" <white-space-character-list-opt> <expression-opt> ";" <white-space-character-list-opt> <expression-opt> ")" <white-space-character-list-opt> <statement>
-                        | "for" <white-space-character-list-opt> "(" <white-space-character-list-opt> <declaration> <expression-opt> ";" <white-space-character-list-opt> <expression-opt> ")" <white-space-character-list-opt> <statement>
+<iteration_statement> ::= "while" <white_space_character_list_opt> "(" <white_space_character_list_opt> <expression> ")" <white_space_character_list_opt> <statement>
+                        | "do" <white_space_character_list_opt> <statement> "while" <white_space_character_list_opt> "(" <white_space_character_list_opt> <expression> ")" <white_space_character_list_opt> ";" <white_space_character_list_opt>
+                        | "for" <white_space_character_list_opt> "(" <white_space_character_list_opt> <expression_opt> ";" <white_space_character_list_opt> <expression_opt> ";" <white_space_character_list_opt> <expression_opt> ")" <white_space_character_list_opt> <statement>
+                        | "for" <white_space_character_list_opt> "(" <white_space_character_list_opt> <declaration> <expression_opt> ";" <white_space_character_list_opt> <expression_opt> ")" <white_space_character_list_opt> <statement>
 
-<jump-statement> ::= "goto" <white-space-character-list> <identifier> <white-space-character-list-opt> ";" <white-space-character-list-opt>
-                   | "continue" <white-space-character-list-opt> ";" <white-space-character-list-opt>
-                   | "break" <white-space-character-list-opt> ";" <white-space-character-list-opt>
-                   | "return" <expression-after-whitespaces-opt> <expression-opt> ";" <white-space-character-list-opt>
+<jump_statement> ::= "goto" <white_space_character_list> <identifier> <white_space_character_list_opt> ";" <white_space_character_list_opt>
+                   | "continue" <white_space_character_list_opt> ";" <white_space_character_list_opt>
+                   | "break" <white_space_character_list_opt> ";" <white_space_character_list_opt>
+                   | "return" <expression_after_whitespaces_opt> <expression_opt> ";" <white_space_character_list_opt>
 
 //  A.2.4 External definitions
 
-<translation-unit> ::= <external-declaration>
-                     | <translation-unit> <external-declaration>
+<translation_unit> ::= <external_declaration>
+                     | <translation_unit> <external_declaration>
 
-<external-declaration> ::= <function-definition>
+<external_declaration> ::= <function_definition>
                          | <declaration>
 
-<function-definition> ::= <declaration-specifiers> <left-whitespace-declarator> <declaration-list-opt> <compound-statement>
+<function_definition> ::= <declaration_specifiers> <left_whitespace_declarator> <declaration_list_opt> <compound_statement>
 
-<declaration-list-opt> ::= "" | <declaration-list>
+<declaration_list_opt> ::= "" | <declaration_list>
 
-<declaration-list> ::= <declaration>
-                     | <declaration-list> <declaration>
+<declaration_list> ::= <declaration>
+                     | <declaration_list> <declaration>
 
 //  A.3 Preprocessing directives
 
-<preprocessing-file> ::= <group-opt>
+<preprocessing_file> ::= <group_opt>
 
-<group-opt> ::= "" | <group>
+<group_opt> ::= "" | <group>
 
-<group> ::= <group-part>
-          | <group> <group-part>
+<group> ::= <group_part>
+          | <group> <new_line> <white_space_character_list_opt> <group_part>
 
-<group-part> ::= <if-section>
-               | <control-line>
-               | <text-line>
-               | "#" <non-directive>
+<group_part> ::= <if_section>
+               | <control_line>
+               | <text_line>
 
-<if-section> ::= <if-group> <elif-groups-opt> <else-group-opt> <endif-line>
+<if_section> ::= <if_group> <elif_groups_opt> <else_group_opt> <endif_line>
 
-<if-group> ::= "#if" <constant-expression> <new-line> <group-opt>
-             | "#ifdef" <identifier> <new-line> <group-opt>
-             | "#ifndef" <identifier> <new-line> <group-opt>
+<if_group> ::= "#if(" <constant_expression> ")" <space_character_list_opt> <new_line> <white_space_character_list_opt> <group_opt>
+             | "#if" <space_character_list> <constant_expression> <new_line> <white_space_character_list_opt> <group_opt>
+             | "#ifdef" <space_character_list> <identifier> <space_character_list_opt> <new_line> <white_space_character_list_opt> <group_opt>
+             | "#ifndef" <space_character_list> <identifier> <space_character_list_opt> <new_line> <white_space_character_list_opt> <group_opt>
 
-<elif-groups-opt> ::= "" | <elif-groups>
+<elif_groups_opt> ::= "" | <elif_groups>
 
-<elif-groups> ::= <elif-group>
-                | <elif-groups> <elif-group>
+<elif_groups> ::= <elif_group>
+                | <elif_groups> <elif_group>
 
-<elif-group> ::= "#elif" <constant-expression> <new-line> <group-opt>
+<elif_group> ::= "#elif" <space_character_list> <constant_expression> <new_line> <white_space_character_list_opt> <group_opt>
 
-<else-group-opt> ::= "" | <else-group>
+<else_group_opt> ::= "" | <else_group>
 
-<else-group> ::= "#else" <new-line> <group-opt>
+<else_group> ::= "#else" <space_character_list_opt> <new_line> <white_space_character_list_opt> <group_opt>
 
-<endif-line> ::= "#endif" <new-line>
+<endif_line> ::= "#endif" <space_character_list_opt>
 
-<control-line> ::= "#include" <pp-tokens> <new-line>
-                 | "#define" <identifier> <replacement-list> <new-line>
-                 | "#define" <identifier> <lparen> <identifier-list-opt> ")" <replacement-list> <new-line>
-                 | "#define" <identifier> <lparen> "...)" <replacement-list> <new-line>
-                 | "#define" <identifier> <lparen> <identifier-list> ",...)" <replacement-list> <new-line>
-                 | "#undef" <identifier> <new-line>
-                 | "#line" <pp-tokens> <new-line>
-                 | "#error" <pp-tokens-opt> <new-line>
-                 | "#pragma" <pp-tokens-opt> <new-line>
-                 | "#" <new-line>
+<control_line> ::= "#include" <space_character_list_opt> <header_name> <space_character_list_opt>
+                 | "#define" <space_character_list> <identifier> <replacement_list> <space_character_list_opt>
+                 | "#define" <space_character_list> <identifier> <lparen> <space_character_list_opt> <pp_identifier_list_opt> ")" <replacement_list> <space_character_list_opt>
+                 | "#define" <space_character_list> <identifier> <lparen> <space_character_list_opt> "..." <space_character_list_opt> ")" <replacement_list> <space_character_list_opt>
+                 | "#define" <space_character_list> <identifier> <lparen> <space_character_list_opt> <pp_identifier_list> "," <space_character_list_opt> "..." <space_character_list_opt> ")" <replacement_list> <space_character_list_opt>
+                 | "#undef" <space_character_list> <identifier> <space_character_list_opt>
+                 | "#error" <pp_tokens_after_space_opt> <space_character_list_opt>
+                 | "#pragma" <pp_tokens_after_space_opt> <space_character_list_opt>
+                 | "#" <space_character_list_opt>
 
-<text-line> ::= <pp-tokens-opt> <new-line>
-
-<non-directive> ::= <pp-tokens> <new-line>
+<text_line> ::= <space_character_list_opt> <pp_tokens_opt> <space_character_list_opt>
 
 <lparen> ::= "("
 
-<replacement-list> ::= <pp-tokens-opt>
+<replacement_list> ::= <pp_tokens_after_space_opt>
 
-<pp-tokens-opt> ::= "" | <pp-tokens>
+<pp_tokens_after_space_opt> ::= "" | <pp_tokens_after_space>
 
-<pp-tokens> ::= <preprocessing-token>
-              | <pp-tokens> <preprocessing-token>
+<pp_tokens_after_space> ::= <space_character_list> <pp_tokens>
 
-<new-line> ::= "\r\n" | "\n"
+<pp_tokens_opt> ::= "" | <pp_tokens>
+
+<pp_tokens> ::= <header_name> <pp_tokens_after_type_a_opt>
+              | <identifier> <pp_tokens_after_type_b_opt>
+              | <pp_number> <pp_tokens_after_type_b_opt>
+              | <character_constant> <pp_tokens_after_type_a_opt>
+              | <string_literal> <pp_tokens_after_type_a_opt>
+              | <punctuator> <pp_tokens_after_type_a_opt>
+              | <non_white_space_character> <pp_tokens_after_type_a_opt>
+
+<pp_tokens_after_type_a_opt> ::= "" | <pp_tokens_after_type_a>
+
+<pp_tokens_after_type_a> ::= <space_character_list_opt> <header_name> <pp_tokens_after_type_a_opt>
+                           | <space_character_list_opt> <identifier> <pp_tokens_after_type_b_opt>
+                           | <space_character_list_opt> <pp_number> <pp_tokens_after_type_b_opt>
+                           | <space_character_list_opt> <character_constant> <pp_tokens_after_type_a_opt>
+                           | <space_character_list_opt> <string_literal> <pp_tokens_after_type_a_opt>
+                           | <space_character_list_opt> <punctuator> <pp_tokens_after_type_a_opt>
+                           | <space_character_list_opt> <non_white_space_character> <pp_tokens_after_type_a_opt>
+
+<pp_tokens_after_type_b_opt> ::= "" | <pp_tokens_after_type_b>
+
+<pp_tokens_after_type_b> ::= <space_character_list_opt> <header_name> <pp_tokens_after_type_a_opt>
+                           | <space_character_list> <identifier> <pp_tokens_after_type_b_opt>
+                           | <space_character_list> <pp_number> <pp_tokens_after_type_b_opt>
+                           | <space_character_list_opt> <character_constant> <pp_tokens_after_type_a_opt>
+                           | <space_character_list_opt> <string_literal> <pp_tokens_after_type_a_opt>
+                           | <space_character_list_opt> <punctuator> <pp_tokens_after_type_a_opt>
+                           | <space_character_list_opt> <non_white_space_character> <pp_tokens_after_type_a_opt>
+
+<new_line> ::= "\r\n" | "\n"
+
+<pp_identifier_list_opt> ::= "" | <pp_identifier_list>
+
+<pp_identifier_list> ::= <identifier> <space_character_list_opt>
+                       | <pp_identifier_list> "," <space_character_list_opt> <identifier> <space_character_list_opt>
 
 // B.1 Whitespace extensions
 //  B.1.x Forced whitespace after certain keywords
 
-<declaration-specifiers-after-white-spaces-opt> ::= "" | <declaration-specifiers-after-white-spaces>
+<declaration_specifiers_after_white_spaces_opt> ::= "" | <declaration_specifiers_after_white_spaces>
 
-<declaration-specifiers-after-white-spaces> ::= <white-space-character-list> <declaration-specifiers>
+<declaration_specifiers_after_white_spaces> ::= <white_space_character_list> <declaration_specifiers>
 
-<specifier-qualifier-list-after-whitespaces-opt> ::= "" | <specifier-qualifier-list-after-whitespaces>
+<specifier_qualifier_list_after_whitespaces_opt> ::= "" | <specifier_qualifier_list_after_whitespaces>
 
-<specifier-qualifier-list-after-whitespaces> ::= <white-space-character-list> <specifier-qualifier-list>
+<specifier_qualifier_list_after_whitespaces> ::= <white_space_character_list> <specifier_qualifier_list>
 
-<identifier-after-whitespaces-opt> ::= "" | <identifier-after-whitespaces>
+<identifier_after_whitespaces_opt> ::= "" | <identifier_after_whitespaces>
 
-<identifier-after-whitespaces> ::= <white-space-character-list> <identifier>
+<identifier_after_whitespaces> ::= <white_space_character_list> <identifier>
 
-<expression-after-whitespaces-opt> ::= "" | <expression-after-whitespaces>
+<expression_after_whitespaces_opt> ::= "" | <expression_after_whitespaces>
 
-<expression-after-whitespaces> ::= <white-space-character-list> <expression>
+<expression_after_whitespaces> ::= <white_space_character_list> <expression>
 
 //  B.1.x Standard whitespace
 
-<white-space-character-list-opt> ::= "" | <white-space-character-list> <white-space-character-list-opt>
+<white_space_character_list_opt> ::= "" | <white_space_character_list> <white_space_character_list_opt>
 
-<white-space-character-list> ::= <white-space-character>
-                               | <white-space-character> <white-space-character-list>
+<white_space_character_list> ::= <white_space_character>
+                               | <white_space_character> <white_space_character_list>
 
-<white-space-character> ::= <space-character>
-                          | <new-line>
+<white_space_character> ::= <space_character>
+                          | <new_line>
 
-<space-character> ::= " " | "\t"
+<space_character_list_opt> ::= "" | <space_character_list>
+
+<space_character_list> ::= <space_character>
+                         | <space_character> <space_character_list>
+
+<space_character> ::= " " | "\t"
