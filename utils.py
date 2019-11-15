@@ -67,14 +67,14 @@ def decode_escapes(s):
 
 def visit(non_terminal, rules_dict):
     # rules_dict: {NonTerminal : expression}
-    reachable_set = set()
+    reachable_set = {non_terminal}
     visit_stack = [non_terminal]
     while len(visit_stack) > 0:
         non_terminal = visit_stack.pop()
-        reachable_set.add(non_terminal)
         for sequence in rules_dict[non_terminal]:
             for symbol in sequence:
                 if isinstance(symbol, NonTerminal) and symbol not in reachable_set:
+                    reachable_set.add(symbol)
                     visit_stack.append(symbol)
     return reachable_set
 

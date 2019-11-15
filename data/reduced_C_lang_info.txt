@@ -1,35 +1,8 @@
 // UNREACHABLE NON-TERMINALS FROM 'start'
 set([
-NonTerminal(name='group'),
-NonTerminal(name='lparen'),
-NonTerminal(name='non_directive'),
-NonTerminal(name='header_name'),
-NonTerminal(name='if_group'),
-NonTerminal(name='else_group_opt'),
-NonTerminal(name='h_char_sequence'),
-NonTerminal(name='else_group'),
-NonTerminal(name='elif_groups'),
-NonTerminal(name='preprocessing_token'),
-NonTerminal(name='group_opt'),
-NonTerminal(name='h_char'),
-NonTerminal(name='elif_group'),
-NonTerminal(name='preprocessing_file'),
-NonTerminal(name='if_section'),
-NonTerminal(name='pp_tokens_opt'),
-NonTerminal(name='punctuator'),
-NonTerminal(name='pp_tokens'),
-NonTerminal(name='elif_groups_opt'),
-NonTerminal(name='q_char_sequence'),
-NonTerminal(name='token'),
-NonTerminal(name='replacement_list'),
-NonTerminal(name='pp_number'),
-NonTerminal(name='non_white_space_character'),
-NonTerminal(name='endif_line'),
-NonTerminal(name='control_line'),
 NonTerminal(name='keyword'),
-NonTerminal(name='q_char'),
-NonTerminal(name='text_line'),
-NonTerminal(name='group_part')])
+NonTerminal(name='token')
+])
 
 // TO LOCATE LEFT RECURSIVE RULES
-^([a-z_]+) +:[^:]+(: | \|) \1[^a-z_]
+^([a-z_]+)     :[^:]*\|? \1[^a-z_]
