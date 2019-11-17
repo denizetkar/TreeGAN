@@ -290,23 +290,23 @@
                         | <equality_expression> "==" <pp_white_space_character_list_opt> <relational_expression>
                         | <equality_expression> "!=" <pp_white_space_character_list_opt> <relational_expression>
 
-<AND_expression> ::= <equality_expression>
-                   | <AND_expression> "&" <pp_white_space_character_list_opt> <equality_expression>
+<and_expression> ::= <equality_expression>
+                   | <and_expression> "&" <pp_white_space_character_list_opt> <equality_expression>
 
-<exclusive_OR_expression> ::= <AND_expression>
-                            | <exclusive_OR_expression> "^" <pp_white_space_character_list_opt> <AND_expression>
+<exclusive_or_expression> ::= <and_expression>
+                            | <exclusive_or_expression> "^" <pp_white_space_character_list_opt> <and_expression>
 
-<inclusive_OR_expression> ::= <exclusive_OR_expression>
-                            | <inclusive_OR_expression> "|" <pp_white_space_character_list_opt> <exclusive_OR_expression>
+<inclusive_or_expression> ::= <exclusive_or_expression>
+                            | <inclusive_or_expression> "|" <pp_white_space_character_list_opt> <exclusive_or_expression>
 
-<logical_AND_expression> ::= <inclusive_OR_expression>
-                           | <logical_AND_expression> "&&" <pp_white_space_character_list_opt> <inclusive_OR_expression>
+<logical_and_expression> ::= <inclusive_or_expression>
+                           | <logical_and_expression> "&&" <pp_white_space_character_list_opt> <inclusive_or_expression>
 
-<logical_OR_expression> ::= <logical_AND_expression>
-                          | <logical_OR_expression> "||" <pp_white_space_character_list_opt> <logical_AND_expression>
+<logical_or_expression> ::= <logical_and_expression>
+                          | <logical_or_expression> "||" <pp_white_space_character_list_opt> <logical_and_expression>
 
-<conditional_expression> ::= <logical_OR_expression>
-                           | <logical_OR_expression> "?" <pp_white_space_character_list_opt> <expression> ":" <pp_white_space_character_list_opt> <conditional_expression>
+<conditional_expression> ::= <logical_or_expression>
+                           | <logical_or_expression> "?" <pp_white_space_character_list_opt> <expression> ":" <pp_white_space_character_list_opt> <conditional_expression>
 
 <assignment_expression_opt> ::= "" | <assignment_expression>
 
@@ -612,8 +612,6 @@
 <pp_tokens_after_spaceopt_opt> ::= "" | <pp_tokens_after_spaceopt>
 
 <pp_tokens_after_spaceopt> ::= <space_character_list_opt> <pp_tokens>
-
-<pp_tokens_opt> ::= "" | <pp_tokens>
 
 <pp_tokens> ::= <header_name> <pp_tokens_after_type_a_opt>
               | <identifier> <pp_tokens_after_type_b_opt>

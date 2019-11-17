@@ -1,12 +1,8 @@
 start: syntax
-syntax         : (comment | rule)+
-comment        : COMMENT_STARTER (LETTER | DIGIT | SYMBOL | APOSTROPHE | QUOT | ESCAPE_CHARACTER)* line_end
-rule           : non_terminal opt_space ASSIGN_OP opt_whitespace expression line_end
-opt_space      : SPACE*
-opt_whitespace : (SPACE | EOL)*
-whitespaces    : (SPACE | EOL) opt_whitespace
+syntax         : opt_whitespace (comment | rule) (EOL opt_whitespace (comment | rule))* opt_whitespace
+comment        : COMMENT_STARTER (LETTER | DIGIT | SYMBOL | APOSTROPHE | QUOT | ESCAPE_CHARACTER)*
+rule           : non_terminal opt_space ASSIGN_OP opt_whitespace expression opt_space
 expression     : sequence (opt_whitespace PIPE opt_whitespace sequence)*
-line_end       : (opt_space EOL)+
 sequence       : term (whitespaces term)*
 term           : terminal | non_terminal
 terminal       : QUOT text1 QUOT | APOSTROPHE text2 APOSTROPHE
@@ -14,6 +10,9 @@ text1          : (CHARACTER | APOSTROPHE)*
 text2          : (CHARACTER | QUOT)*
 non_terminal   : LESS rule_text BIGGER
 rule_text      : LETTER RULE_CHAR*
+opt_space      : SPACE*
+whitespaces    : (SPACE | EOL) opt_whitespace
+opt_whitespace : (SPACE | EOL)*
 
 CHARACTER      : LETTER | DIGIT | SYMBOL | ESCAPE_SEQUENCE
 RULE_CHAR      : LETTER | DIGIT | HYPHEN | UNDERSCORE

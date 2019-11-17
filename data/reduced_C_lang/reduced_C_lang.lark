@@ -613,8 +613,6 @@ pp_tokens_after_spaceopt_opt     : pp_tokens_after_spaceopt?
 
 pp_tokens_after_spaceopt     : space_character_list_opt pp_tokens
 
-pp_tokens_opt     : pp_tokens?
-
 pp_tokens     : header_name pp_tokens_after_type_a_opt
               | identifier pp_tokens_after_type_b_opt
               | pp_number pp_tokens_after_type_b_opt
