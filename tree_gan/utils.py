@@ -11,25 +11,15 @@ NonTerminal = namedtuple('NonTerminal', ['name'])
 Terminal = namedtuple('Terminal', ['name'])
 
 
-def recurse_tree(tree, func, recurse_tokens=False):
-    def func_skip_tokens(tree):
-        return func(tree) if hasattr(tree, 'children') else tree
-    if recurse_tokens:
-        return list(map(func, tree.children)) if hasattr(tree, 'children') else tree
-    return list(map(func_skip_tokens, tree.children))
-
-
 class SimpleTree:
     def __init__(self, data="", children=None, used_rule=()):
-        if children is None:
-            children = []
         self.data = data
-        self.children = children
+        self.children = [] if children is None else children
         self.used_rule = used_rule
 
     @classmethod
     def from_lark_tree(cls, tree):
-        new = recurse_tree(tree, SimpleTree.from_lark_tree)
+        new = [SimpleTree.from_lark_tree(child) if isinstance(child, lark.Tree) else child for child in tree.children]
         used_rule = []
         if new:
             for symbol in new:
@@ -43,8 +33,7 @@ class SimpleTree:
         return 'Tree(%s, %s)' % (self.data, self.children)
 
     def pretty(self, stream=None):
-        if stream is None:
-            stream = io.StringIO()
+        stream = io.StringIO() if stream is None else stream
         self.pretty_stream(stream, 0)
         return stream.getvalue()
 
@@ -70,6 +59,11 @@ class BiDirectionalList:
         if value not in self._value_to_index:
             self._value_to_index[value] = len(self._index_to_value)
             self._index_to_value.append(value)
+
+    def pop(self):
+        last_value = self._index_to_value[-1]
+        del self._value_to_index[last_value], self._index_to_value[-1]
+        return last_value
 
     def index(self, value):
         return self._value_to_index[value]
@@ -168,20 +162,16 @@ class SimpleTreeActionGetter:
         for non_terminal, rules in rules_dict.items():
             self.action_offsets[non_terminal] = cum_sum
             cum_sum += len(rules)
-        self.actions = []
 
     def collect_actions(self, tree):
+        actions = []
+        self._collect_actions(tree, actions)
+        return actions
+
+    def _collect_actions(self, tree, actions):
         non_terminal = NonTerminal(tree.data)
         action = self.action_offsets[non_terminal] + self.rules_dict[non_terminal].index(tree.used_rule)
-        self.actions.append(action)
-        _ = recurse_tree(tree, self.collect_actions)
-
-    def __getstate__(self):
-        return self.rules_dict, self.action_offsets
-
-    def __setstate__(self, state):
-        self.rules_dict, self.action_offsets = state
-        self.actions = []
-
-    def reset(self):
-        self.actions = []
+        actions.append(action)
+        for child in tree.children:
+            if isinstance(child, SimpleTree):
+                self._collect_actions(child, actions)
