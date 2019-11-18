@@ -2,7 +2,7 @@ import os
 
 from lark import Lark
 
-import utils
+import tree_gan
 
 
 grammar_file_path = os.path.join('..', 'data', 'reduced_C_lang', 'reduced_C_lang.lark')
@@ -13,5 +13,5 @@ text_file_path = os.path.join('..', 'data', 'reduced_C_lang', 'text_files', 'cod
 with open(text_file_path) as f:
     tree = parser.parse(f.read())
 
-tree = utils.SimpleTree.from_lark_tree(tree)
-print(utils.pretty(tree))
+tree = tree_gan.SimpleTree.from_lark_tree(tree)
+print(tree.pretty())

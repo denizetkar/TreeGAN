@@ -199,3 +199,4 @@ dmypy.json
 
 # my stuff
 /models/
+*.pickle

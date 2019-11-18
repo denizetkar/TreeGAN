@@ -1,14 +1,22 @@
 import codecs
-from collections import namedtuple
 import io
 import os
 import re
 import sys
+from collections import namedtuple
 
 import lark
 
 NonTerminal = namedtuple('NonTerminal', ['name'])
 Terminal = namedtuple('Terminal', ['name'])
+
+
+def recurse_tree(tree, func, recurse_tokens=False):
+    def func_skip_tokens(tree):
+        return func(tree) if hasattr(tree, 'children') else tree
+    if recurse_tokens:
+        return list(map(func, tree.children)) if hasattr(tree, 'children') else tree
+    return list(map(func_skip_tokens, tree.children))
 
 
 class SimpleTree:
@@ -34,69 +42,20 @@ class SimpleTree:
     def __repr__(self):
         return 'Tree(%s, %s)' % (self.data, self.children)
 
+    def pretty(self, stream=None):
+        if stream is None:
+            stream = io.StringIO()
+        self.pretty_stream(stream, 0)
+        return stream.getvalue()
 
-def pretty(tree, stream=None):
-    if stream is None:
-        stream = io.StringIO()
-    pretty_stream(tree, stream, 0)
-    return stream.getvalue()
-
-
-def pretty_stream(tree, stream, depth=0):
-    indentation = '| ' * depth
-    if hasattr(tree, 'data') and hasattr(tree, 'children'):
-        print(indentation + tree.data, file=stream)
-        for t in tree.children:
-            pretty_stream(t, stream, depth + 1)
-    else:
-        print(indentation + '%s %s' % (tree.type, repr(tree.value)), file=stream)
-
-
-def recurse_tree(tree, func, recurse_tokens=False):
-    def func_skip_tokens(tree):
-        return func(tree) if hasattr(tree, 'children') else tree
-    if recurse_tokens:
-        return list(map(func, tree.children)) if hasattr(tree, 'children') else tree
-    return list(map(func_skip_tokens, tree.children))
-
-
-def print_rules_dict(rules_dict, stream=sys.stdout):
-    indentation = ' ' * 4
-    for rule, expression in rules_dict.items():
-        print(str(rule) + ':', file=stream)
-        for sequence in expression:
-            print(indentation + str(sequence), file=stream)
-
-
-ESCAPE_SEQUENCE_RE = re.compile(r'''
-    ( \\U........      # 8-digit hex escapes
-    | \\u....          # 4-digit hex escapes
-    | \\x..            # 2-digit hex escapes
-    | \\[0-7]{1,3}     # Octal escapes
-    | \\N\{[^}]+\}     # Unicode characters by name
-    | \\[\\'"abfnrtv]  # Single-character escapes
-    )''', re.UNICODE | re.VERBOSE)
-
-
-def decode_escapes(s):
-    def decode_match(match):
-        return codecs.decode(match.group(0), 'unicode-escape')
-
-    return ESCAPE_SEQUENCE_RE.sub(decode_match, s)
-
-
-def visit(non_terminal, rules_dict):
-    # rules_dict: {NonTerminal : expression}
-    reachable_set = {non_terminal}
-    visit_stack = [non_terminal]
-    while len(visit_stack) > 0:
-        non_terminal = visit_stack.pop()
-        for sequence in rules_dict[non_terminal]:
-            for symbol in sequence:
-                if isinstance(symbol, NonTerminal) and symbol not in reachable_set:
-                    reachable_set.add(symbol)
-                    visit_stack.append(symbol)
-    return reachable_set
+    def pretty_stream(self, stream, depth=0):
+        indentation = '| ' * depth
+        print(indentation + self.data, file=stream)
+        for t in self.children:
+            if isinstance(t, SimpleTree):
+                t.pretty_stream(stream, depth + 1)
+            else:
+                print(indentation + '%s %s' % (t.type, repr(t.value)), file=stream)
 
 
 class BiDirectionalList:
@@ -130,6 +89,22 @@ class BiDirectionalList:
 
 
 class CustomBNFParser:
+    ESCAPE_SEQUENCE_RE = re.compile(r'''
+        ( \\U........      # 8-digit hex escapes
+        | \\u....          # 4-digit hex escapes
+        | \\x..            # 2-digit hex escapes
+        | \\[0-7]{1,3}     # Octal escapes
+        | \\N\{[^}]+\}     # Unicode characters by name
+        | \\[\\'"abfnrtv]  # Single-character escapes
+        )''', re.UNICODE | re.VERBOSE)
+
+    @staticmethod
+    def decode_escapes(s):
+        def decode_match(match):
+            return codecs.decode(match.group(0), 'unicode-escape')
+
+        return CustomBNFParser.ESCAPE_SEQUENCE_RE.sub(decode_match, s)
+
     _grammar_file_path = os.path.join('data', 'bnf_lang', 'bnf.lark')
 
     def __init__(self, grammar_file_path=None):
@@ -165,7 +140,7 @@ class CustomBNFParser:
                         terminal = term.children[0]
                         text_i = terminal.children[1]
                         term_obj = Terminal(
-                            decode_escapes(''.join([token.value for token in text_i.children])))
+                            CustomBNFParser.decode_escapes(''.join([token.value for token in text_i.children])))
                     else:  # term.children[0].data == 'non_terminal'
                         rhs_non_terminal = term.children[0]
                         rhs_rule_text = rhs_non_terminal.children[1]
@@ -176,17 +151,37 @@ class CustomBNFParser:
 
         return tree, rules_dict
 
+    @staticmethod
+    def print_rules_dict(rules_dict, stream=sys.stdout):
+        indentation = ' ' * 4
+        for rule, expression in rules_dict.items():
+            print(str(rule) + ':', file=stream)
+            for sequence in expression:
+                print(indentation + str(sequence), file=stream)
+
 
 class SimpleTreeActionGetter:
     def __init__(self, rules_dict):
         self.rules_dict = rules_dict
+        self.action_offsets = {}
+        cum_sum = 0
+        for non_terminal, rules in rules_dict.items():
+            self.action_offsets[non_terminal] = cum_sum
+            cum_sum += len(rules)
         self.actions = []
 
     def collect_actions(self, tree):
         non_terminal = NonTerminal(tree.data)
-        action = self.rules_dict[non_terminal].index(tree.used_rule)
-        self.actions.append((non_terminal, action))
+        action = self.action_offsets[non_terminal] + self.rules_dict[non_terminal].index(tree.used_rule)
+        self.actions.append(action)
         _ = recurse_tree(tree, self.collect_actions)
+
+    def __getstate__(self):
+        return self.rules_dict, self.action_offsets
+
+    def __setstate__(self, state):
+        self.rules_dict, self.action_offsets = state
+        self.actions = []
 
     def reset(self):
         self.actions = []

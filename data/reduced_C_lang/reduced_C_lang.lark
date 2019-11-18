@@ -350,8 +350,8 @@ storage_class_specifier     : "extern" | "static" | "_Thread_local" | "auto" | "
 type_specifier     : "void" | "char" | "short" | "int" | "long" | "float" | "double" | "signed" | "unsigned" | "_Bool"
                    | "_Complex" | atomic_type_specifier | struct_or_union_specifier | enum_specifier
 
-struct_or_union_specifier     : struct_or_union pp_white_space_character_list_opt identifier_opt pp_white_space_character_list_opt "{" pp_white_space_character_list_opt struct_declaration_list "}"
-                              | struct_or_union pp_white_space_character_list_opt identifier
+struct_or_union_specifier     : struct_or_union identifier_after_whitespaces_opt pp_white_space_character_list_opt "{" pp_white_space_character_list_opt struct_declaration_list "}"
+                              | struct_or_union pp_white_space_character_list identifier
 
 struct_or_union     : "struct" | "union"
 
@@ -464,7 +464,7 @@ abstract_declarator_opts     : abstract_declarator
                              | pp_white_space_character_list_opt
 
 abstract_declarator     : left_whitespace_pointer pp_white_space_character_list_opt
-                        | left_whitespace_pointer_opt direct_abstract_declarator
+                        | left_whitespace_pointer_opt pp_white_space_character_list_opt direct_abstract_declarator
 
 direct_abstract_declarator_opt     : direct_abstract_declarator?
 
