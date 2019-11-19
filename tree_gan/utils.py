@@ -45,7 +45,7 @@ class SimpleTree:
             if isinstance(t, SimpleTree):
                 t.pretty_stream(stream, depth + 1)
             else:
-                print(indentation + repr(t), file=stream)
+                print(indentation + '| ' + repr(t), file=stream)
 
 
 class Enumerator:
