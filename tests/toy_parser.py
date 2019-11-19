@@ -1,7 +1,8 @@
 '''A Calculator Implemented With A Top-Down, Recursive-Descent Parser'''
 # Author: Erez Shinan, Dec 2012
 
-import re, collections
+import collections
+import re
 from operator import add, sub, mul, truediv
 
 Token = collections.namedtuple('Token', ['name', 'value'])

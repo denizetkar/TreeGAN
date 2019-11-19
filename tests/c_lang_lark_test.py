@@ -4,7 +4,6 @@ from lark import Lark
 
 import tree_gan
 
-
 grammar_file_path = os.path.join('..', 'data', 'reduced_C_lang', 'reduced_C_lang.lark')
 with open(grammar_file_path) as f:
     parser = Lark(f, keep_all_tokens=True)

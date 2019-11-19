@@ -19,15 +19,16 @@ class SimpleTree:
 
     @classmethod
     def from_lark_tree(cls, tree):
-        new = [SimpleTree.from_lark_tree(child) if isinstance(child, lark.Tree) else child for child in tree.children]
+        children = [SimpleTree.from_lark_tree(child) if isinstance(child, lark.Tree) else Terminal(child.value)
+                    for child in tree.children]
         used_rule = []
-        if new:
-            for symbol in new:
-                symbol = NonTerminal(symbol.data) if isinstance(symbol, SimpleTree) else Terminal(symbol.value)
+        if children:
+            for symbol in children:
+                symbol = NonTerminal(symbol.data) if isinstance(symbol, SimpleTree) else symbol
                 used_rule.append(symbol)
         else:
-            used_rule.append(NonTerminal(""))
-        return cls(tree.data, new, tuple(used_rule))
+            used_rule.append(NonTerminal(''))
+        return cls(tree.data, children, tuple(used_rule))
 
     def __repr__(self):
         return 'Tree(%s, %s)' % (self.data, self.children)
@@ -44,7 +45,7 @@ class SimpleTree:
             if isinstance(t, SimpleTree):
                 t.pretty_stream(stream, depth + 1)
             else:
-                print(indentation + '%s %s' % (t.type, repr(t.value)), file=stream)
+                print(indentation + repr(t), file=stream)
 
 
 class Enumerator:
@@ -103,10 +104,10 @@ class CustomBNFParser:
         return CustomBNFParser.ESCAPE_SEQUENCE_RE.sub(decode_match, s)
 
     def __init__(self, grammar_file_path=None):
-        package_dir = os.path.dirname(os.path.abspath(__file__))
-        _grammar_file_path = os.path.join(package_dir, '..', 'data', 'bnf_lang', 'bnf.lark')
-        self._grammar_file_path = _grammar_file_path if grammar_file_path is None else grammar_file_path
-        with open(self._grammar_file_path) as f:
+        if grammar_file_path is None:
+            package_dir = os.path.dirname(os.path.abspath(__file__))
+            grammar_file_path = os.path.join(package_dir, '..', 'data', 'bnf_lang', 'bnf.lark')
+        with open(grammar_file_path) as f:
             self.parser = lark.Lark(f)
 
     def parse_file(self, text_file_path, start=None):
@@ -172,28 +173,26 @@ class SimpleTreeActionGetter:
             self.action_offsets[non_terminal_id] = cum_sum
             cum_sum += len(rules)
 
-    def collect_actions(self, tree):
+    def collect_actions(self, id_tree):
         actions = []
-        self._collect_actions(tree, actions)
+        self._collect_actions(id_tree, actions)
         return actions
 
-    def _collect_actions(self, tree, actions):
-        non_terminal_id = self.symbol_names.index(NonTerminal(tree.data))
-        used_rule = tuple(self.symbol_names.index(symbol) for symbol in tree.used_rule)
-        action = self.action_offsets[non_terminal_id] + self.rules_dict[non_terminal_id].index(used_rule)
+    def _collect_actions(self, id_tree, actions):
+        non_terminal_id = id_tree.data
+        action = self.action_offsets[non_terminal_id] + self.rules_dict[non_terminal_id].index(id_tree.used_rule)
         actions.append(action)
-        for child in tree.children:
+        for child in id_tree.children:
             if isinstance(child, SimpleTree):
                 self._collect_actions(child, actions)
 
     def construct_text(self, actions, start='start'):
         actions_iterator = iter(actions)
         stream = io.StringIO()
-        self._construct_text(NonTerminal(start), actions_iterator, stream)
+        self._construct_text(self.symbol_names.index(NonTerminal(start)), actions_iterator, stream)
         return stream.getvalue()
 
-    def _construct_text(self, non_terminal, actions_iterator, stream):
-        non_terminal_id = self.symbol_names.index(non_terminal)
+    def _construct_text(self, non_terminal_id, actions_iterator, stream):
         action = next(actions_iterator) - self.action_offsets[non_terminal_id]
         used_rule = self.rules_dict[non_terminal_id][action]
         for symbol_id in used_rule:
@@ -201,4 +200,17 @@ class SimpleTreeActionGetter:
             if isinstance(symbol, Terminal):
                 stream.write(symbol.name)
             else:  # NonTerminal
-                self._construct_text(symbol, actions_iterator, stream)
+                self._construct_text(symbol_id, actions_iterator, stream)
+
+    def lark_tree_to_id_tree(self, tree):
+        data = self.symbol_names.index(NonTerminal(tree.data))
+        children = [self.lark_tree_to_id_tree(child) if isinstance(child, lark.Tree) else self.symbol_names.index(
+            Terminal(child.value)) for child in tree.children]
+        used_rule = []
+        if children:
+            for child in children:
+                child = child.data if isinstance(child, SimpleTree) else child
+                used_rule.append(child)
+        else:
+            used_rule.append(self.symbol_names.index(NonTerminal('')))
+        return SimpleTree(data, children, tuple(used_rule))

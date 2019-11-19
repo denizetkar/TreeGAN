@@ -4,7 +4,7 @@ import pickle
 from lark import Lark
 from torch.utils.data import Dataset
 
-from tree_gan.utils import SimpleTree, Enumerator, CustomBNFParser, SimpleTreeActionGetter
+from tree_gan.utils import Enumerator, CustomBNFParser, SimpleTreeActionGetter
 
 
 class ActionSequenceDataset(Dataset):
@@ -47,9 +47,9 @@ class ActionSequenceDataset(Dataset):
             with open(text_file_path) as f:
                 # Get parse tree of the text file written in the language defined by the given grammar
                 text_tree = self.parser.parse(f.read(), start=self.start)
-                text_tree = SimpleTree.from_lark_tree(text_tree)
+                id_tree = self.action_getter.lark_tree_to_id_tree(text_tree)
                 # Get sequence of actions taken by each non-terminal symbol in 'prefix DFS left-to-right' order
-                action_sequence = self.action_getter.collect_actions(text_tree)
+                action_sequence = self.action_getter.collect_actions(id_tree)
             if self.action_sequences_dir:
                 with open(text_action_sequence_path, 'wb') as f:
                     pickle.dump(action_sequence, f)
