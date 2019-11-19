@@ -8,9 +8,11 @@ from tree_gan.utils import SimpleTree, BiDirectionalList, CustomBNFParser, Simpl
 
 
 class ActionSequenceDataset(Dataset):
-    def __init__(self, bnf_path, lark_path, texts_dir, action_getter_path='', action_sequences_dir=''):
+    def __init__(self, bnf_path, lark_path, texts_dir, action_getter_path='', action_sequences_dir='', start=None,
+                 lang_grammar_start='start'):
         self.texts_dir = texts_dir
         self.action_sequences_dir = action_sequences_dir
+        self.start = start
         self.text_filenames = BiDirectionalList(
             [dir_entry.name for dir_entry in os.scandir(texts_dir) if dir_entry.is_file()])
         # Get rule dictionary of the language
@@ -20,15 +22,15 @@ class ActionSequenceDataset(Dataset):
                 action_getter = pickle.load(f)
         else:
             my_bnf_parser = CustomBNFParser()
-            _, rules_dict = my_bnf_parser.parse_file(bnf_path)
-            action_getter = SimpleTreeActionGetter(rules_dict)
+            _, rules_dict, symbol_names = my_bnf_parser.parse_file(bnf_path, start=lang_grammar_start)
+            action_getter = SimpleTreeActionGetter(rules_dict, symbol_names)
             if action_getter_path:
                 with open(action_getter_path, 'wb') as f:
                     pickle.dump(action_getter, f)
         self.action_getter = action_getter
 
         with open(lark_path) as f:
-            self.parser = Lark(f, keep_all_tokens=True)
+            self.parser = Lark(f, keep_all_tokens=True, start=lang_grammar_start)
 
     def index(self, text_filename):
         return self.text_filenames.index(text_filename)
@@ -44,7 +46,7 @@ class ActionSequenceDataset(Dataset):
         else:
             with open(text_file_path) as f:
                 # Get parse tree of the text file written in the language defined by the given grammar
-                text_tree = self.parser.parse(f.read())
+                text_tree = self.parser.parse(f.read(), start=self.start)
                 text_tree = SimpleTree.from_lark_tree(text_tree)
                 # Get sequence of actions taken by each non-terminal symbol in 'prefix DFS left-to-right' order
                 action_sequence = self.action_getter.collect_actions(text_tree)

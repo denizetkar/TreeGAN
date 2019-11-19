@@ -21,8 +21,6 @@
 
 //  A.1.3 Identifiers
 
-<identifier_opt> ::= "" | <identifier>
-
 <identifier> ::= <identifier_nondigit>
                | <identifier> <identifier_nondigit>
                | <identifier> <digit>

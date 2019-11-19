@@ -16,4 +16,5 @@ a_s_dataset = ActionSequenceDataset(reduced_C_bnf_path, reduced_C_lark_path, red
                                     reduced_C_action_getter_path, reduced_C_action_sequences_dir)
 action_sequence = a_s_dataset[a_s_dataset.index('code.c')]
 print('ELAPSED TIME (sec): ' + str(time.process_time() - START))
+print(a_s_dataset.action_getter.construct_text(action_sequence))
 pass

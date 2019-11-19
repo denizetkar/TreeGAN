@@ -56,7 +56,7 @@ class BiDirectionalList:
                 self.append(value)
 
     def append(self, value):
-        if value not in self._value_to_index:
+        if value not in self:
             self._value_to_index[value] = len(self._index_to_value)
             self._index_to_value.append(value)
 
@@ -67,6 +67,9 @@ class BiDirectionalList:
 
     def index(self, value):
         return self._value_to_index[value]
+
+    def __contains__(self, value):
+        return value in self._value_to_index
 
     def __getitem__(self, index):
         return self._index_to_value[index]
@@ -79,7 +82,7 @@ class BiDirectionalList:
         self._index_to_value = []
 
     def __repr__(self):
-        return repr(self._index_to_value)
+        return 'BiDirectionalList(%s)' % repr(self._index_to_value)
 
 
 class CustomBNFParser:
@@ -99,10 +102,10 @@ class CustomBNFParser:
 
         return CustomBNFParser.ESCAPE_SEQUENCE_RE.sub(decode_match, s)
 
-    _grammar_file_path = os.path.join('data', 'bnf_lang', 'bnf.lark')
-
     def __init__(self, grammar_file_path=None):
-        self._grammar_file_path = CustomBNFParser._grammar_file_path if grammar_file_path is None else grammar_file_path
+        package_dir = os.path.dirname(os.path.abspath(__file__))
+        _grammar_file_path = os.path.join(package_dir, '..', 'data', 'bnf_lang', 'bnf.lark')
+        self._grammar_file_path = _grammar_file_path if grammar_file_path is None else grammar_file_path
         with open(self._grammar_file_path) as f:
             self.parser = lark.Lark(f)
 
@@ -113,6 +116,7 @@ class CustomBNFParser:
     def parse(self, text, start=None):
         tree = self.parser.parse(text, start=start)
         rules_dict = {}
+        symbol_names = BiDirectionalList()
         syntax = tree.children[0]
         for syntax_child_index in range(1, len(syntax.children), 3):
             syntax_child = syntax.children[syntax_child_index]
@@ -123,6 +127,8 @@ class CustomBNFParser:
             non_terminal, expression = rule.children[0], rule.children[4]
             rule_text = non_terminal.children[1]
             rule_name_obj = NonTerminal(''.join([token.value for token in rule_text.children]))
+            symbol_names.append(rule_name_obj)
+            rule_name_obj = symbol_names.index(rule_name_obj)
 
             expression_obj = BiDirectionalList()
             for sequence_index in range(0, len(expression.children), 4):
@@ -139,28 +145,31 @@ class CustomBNFParser:
                         rhs_non_terminal = term.children[0]
                         rhs_rule_text = rhs_non_terminal.children[1]
                         term_obj = NonTerminal(''.join([token.value for token in rhs_rule_text.children]))
+                    symbol_names.append(term_obj)
+                    term_obj = symbol_names.index(term_obj)
                     sequence_obj.append(term_obj)
                 expression_obj.append(tuple(sequence_obj))
             rules_dict[rule_name_obj] = expression_obj
 
-        return tree, rules_dict
+        return tree, rules_dict, symbol_names
 
     @staticmethod
-    def print_rules_dict(rules_dict, stream=sys.stdout):
+    def print_rules_dict(rules_dict, symbol_names, stream=sys.stdout):
         indentation = ' ' * 4
-        for rule, expression in rules_dict.items():
-            print(str(rule) + ':', file=stream)
+        for non_terminal_id, expression in rules_dict.items():
+            print(str(symbol_names[non_terminal_id]) + ':', file=stream)
             for sequence in expression:
-                print(indentation + str(sequence), file=stream)
+                print(indentation + '[%s]' % str([symbol_names[symbol_id] for symbol_id in sequence]), file=stream)
 
 
 class SimpleTreeActionGetter:
-    def __init__(self, rules_dict):
+    def __init__(self, rules_dict, symbol_names):
         self.rules_dict = rules_dict
+        self.symbol_names = symbol_names
         self.action_offsets = {}
         cum_sum = 0
-        for non_terminal, rules in rules_dict.items():
-            self.action_offsets[non_terminal] = cum_sum
+        for non_terminal_id, rules in rules_dict.items():
+            self.action_offsets[non_terminal_id] = cum_sum
             cum_sum += len(rules)
 
     def collect_actions(self, tree):
@@ -169,9 +178,27 @@ class SimpleTreeActionGetter:
         return actions
 
     def _collect_actions(self, tree, actions):
-        non_terminal = NonTerminal(tree.data)
-        action = self.action_offsets[non_terminal] + self.rules_dict[non_terminal].index(tree.used_rule)
+        non_terminal_id = self.symbol_names.index(NonTerminal(tree.data))
+        used_rule = tuple(self.symbol_names.index(symbol) for symbol in tree.used_rule)
+        action = self.action_offsets[non_terminal_id] + self.rules_dict[non_terminal_id].index(used_rule)
         actions.append(action)
         for child in tree.children:
             if isinstance(child, SimpleTree):
                 self._collect_actions(child, actions)
+
+    def construct_text(self, actions, start='start'):
+        actions_iterator = iter(actions)
+        stream = io.StringIO()
+        self._construct_text(NonTerminal(start), actions_iterator, stream)
+        return stream.getvalue()
+
+    def _construct_text(self, non_terminal, actions_iterator, stream):
+        non_terminal_id = self.symbol_names.index(non_terminal)
+        action = next(actions_iterator) - self.action_offsets[non_terminal_id]
+        used_rule = self.rules_dict[non_terminal_id][action]
+        for symbol_id in used_rule:
+            symbol = self.symbol_names[symbol_id]
+            if isinstance(symbol, Terminal):
+                stream.write(symbol.name)
+            else:  # NonTerminal
+                self._construct_text(symbol, actions_iterator, stream)
