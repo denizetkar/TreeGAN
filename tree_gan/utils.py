@@ -47,7 +47,7 @@ class SimpleTree:
                 print(indentation + '%s %s' % (t.type, repr(t.value)), file=stream)
 
 
-class BiDirectionalList:
+class Enumerator:
     def __init__(self, values=None):
         self._value_to_index = {}
         self._index_to_value = []
@@ -82,7 +82,7 @@ class BiDirectionalList:
         self._index_to_value = []
 
     def __repr__(self):
-        return 'BiDirectionalList(%s)' % repr(self._index_to_value)
+        return 'Enumerator(%s)' % repr(self._index_to_value)
 
 
 class CustomBNFParser:
@@ -116,7 +116,7 @@ class CustomBNFParser:
     def parse(self, text, start=None):
         tree = self.parser.parse(text, start=start)
         rules_dict = {}
-        symbol_names = BiDirectionalList()
+        symbol_names = Enumerator()
         syntax = tree.children[0]
         for syntax_child_index in range(1, len(syntax.children), 3):
             syntax_child = syntax.children[syntax_child_index]
@@ -130,7 +130,7 @@ class CustomBNFParser:
             symbol_names.append(rule_name_obj)
             rule_name_obj = symbol_names.index(rule_name_obj)
 
-            expression_obj = BiDirectionalList()
+            expression_obj = Enumerator()
             for sequence_index in range(0, len(expression.children), 4):
                 sequence = expression.children[sequence_index]
                 sequence_obj = []

@@ -4,7 +4,7 @@ import pickle
 from lark import Lark
 from torch.utils.data import Dataset
 
-from tree_gan.utils import SimpleTree, BiDirectionalList, CustomBNFParser, SimpleTreeActionGetter
+from tree_gan.utils import SimpleTree, Enumerator, CustomBNFParser, SimpleTreeActionGetter
 
 
 class ActionSequenceDataset(Dataset):
@@ -13,7 +13,7 @@ class ActionSequenceDataset(Dataset):
         self.texts_dir = texts_dir
         self.action_sequences_dir = action_sequences_dir
         self.start = start
-        self.text_filenames = BiDirectionalList(
+        self.text_filenames = Enumerator(
             [dir_entry.name for dir_entry in os.scandir(texts_dir) if dir_entry.is_file()])
         # Get rule dictionary of the language
         # First check if action getter already exists, if not then parse the language grammar to create it
