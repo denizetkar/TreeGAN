@@ -179,12 +179,15 @@ class SimpleTreeActionGetter:
         return actions
 
     def _collect_actions(self, id_tree, actions):
-        non_terminal_id = id_tree.data
-        action = self.action_offsets[non_terminal_id] + self.rules_dict[non_terminal_id].index(id_tree.used_rule)
-        actions.append(action)
-        for child in id_tree.children:
-            if isinstance(child, SimpleTree):
-                self._collect_actions(child, actions)
+        id_tree_stack = [id_tree]
+        while id_tree_stack:
+            id_tree = id_tree_stack.pop()
+            non_terminal_id = id_tree.data
+            action = self.action_offsets[non_terminal_id] + self.rules_dict[non_terminal_id].index(id_tree.used_rule)
+            actions.append(action)
+            for child in reversed(id_tree.children):
+                if isinstance(child, SimpleTree):
+                    id_tree_stack.append(child)
 
     def construct_text(self, actions, start='start'):
         actions_iterator = iter(actions)
@@ -193,14 +196,34 @@ class SimpleTreeActionGetter:
         return stream.getvalue()
 
     def _construct_text(self, non_terminal_id, actions_iterator, stream):
-        action = next(actions_iterator) - self.action_offsets[non_terminal_id]
-        used_rule = self.rules_dict[non_terminal_id][action]
-        for symbol_id in used_rule:
-            symbol = self.symbol_names[symbol_id]
-            if isinstance(symbol, Terminal):
-                stream.write(symbol.name)
-            else:  # NonTerminal
-                self._construct_text(symbol_id, actions_iterator, stream)
+        non_terminal_id_stack = [non_terminal_id]
+        used_rule_stack = []
+        symbol_count_stack = [0]
+        while non_terminal_id_stack:
+            non_terminal_id = non_terminal_id_stack[-1]
+            if len(used_rule_stack) == len(non_terminal_id_stack) - 1:
+                action = next(actions_iterator) - self.action_offsets[non_terminal_id]
+                used_rule = self.rules_dict[non_terminal_id][action]
+                used_rule_stack.append(used_rule)
+            else:
+                used_rule = used_rule_stack[-1]
+            recurse_next_symbol = False
+            for symbol_id in used_rule[symbol_count_stack[-1]:]:
+                symbol = self.symbol_names[symbol_id]
+                symbol_count_stack[-1] += 1
+                if isinstance(symbol, Terminal):
+                    stream.write(symbol.name)
+                else:  # NonTerminal
+                    non_terminal_id_stack.append(symbol_id)
+                    symbol_count_stack.append(0)
+                    recurse_next_symbol = True
+                    break
+            if recurse_next_symbol:
+                continue
+            elif symbol_count_stack[-1] == len(used_rule):
+                non_terminal_id_stack.pop()
+                used_rule_stack.pop()
+                symbol_count_stack.pop()
 
     def lark_tree_to_id_tree(self, tree):
         data = self.symbol_names.index(NonTerminal(tree.data))

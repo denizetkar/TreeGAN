@@ -423,7 +423,7 @@ direct_declarator     : identifier pp_white_space_character_list_opt
                       | "(" pp_white_space_character_list_opt declarator ")" pp_white_space_character_list_opt
                       | direct_declarator "[" pp_white_space_character_list_opt type_qualifier_list_opt assignment_expression_opt "]" pp_white_space_character_list_opt
                       | direct_declarator "[" pp_white_space_character_list_opt "static" pp_white_space_character_list type_qualifier_list_opt assignment_expression "]" pp_white_space_character_list_opt
-                      | direct_declarator "[" pp_white_space_character_list_opt type_qualifier_list "static" pp_white_space_character_list assignment_expression "]" pp_white_space_character_list_opt
+                      | direct_declarator "[" pp_white_space_character_list_opt type_qualifier_list white_space_character "static" pp_white_space_character_list assignment_expression "]" pp_white_space_character_list_opt
                       | direct_declarator "[" pp_white_space_character_list_opt type_qualifier_list_opt "*" pp_white_space_character_list_opt "]" pp_white_space_character_list_opt
                       | direct_declarator "(" pp_white_space_character_list_opt parameter_type_list ")" pp_white_space_character_list_opt
                       | direct_declarator "(" pp_white_space_character_list_opt identifier_list_opt ")" pp_white_space_character_list_opt
@@ -469,7 +469,7 @@ direct_abstract_declarator_opt     : direct_abstract_declarator?
 direct_abstract_declarator     : "(" pp_white_space_character_list_opt abstract_declarator ")" pp_white_space_character_list_opt
                                | direct_abstract_declarator_opt "[" pp_white_space_character_list_opt type_qualifier_list_opt assignment_expression_opt "]" pp_white_space_character_list_opt
                                | direct_abstract_declarator_opt "[" pp_white_space_character_list_opt "static" pp_white_space_character_list type_qualifier_list_opt assignment_expression "]" pp_white_space_character_list_opt
-                               | direct_abstract_declarator_opt "[" pp_white_space_character_list_opt type_qualifier_list "static" pp_white_space_character_list assignment_expression "]" pp_white_space_character_list_opt
+                               | direct_abstract_declarator_opt "[" pp_white_space_character_list_opt type_qualifier_list white_space_character "static" pp_white_space_character_list assignment_expression "]" pp_white_space_character_list_opt
                                | direct_abstract_declarator_opt "[" pp_white_space_character_list_opt "*" pp_white_space_character_list_opt "]" pp_white_space_character_list_opt
                                | direct_abstract_declarator_opt "(" pp_white_space_character_list_opt parameter_type_list_opt ")" pp_white_space_character_list_opt
 
