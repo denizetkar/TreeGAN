@@ -1,12 +1,8 @@
-from collections import namedtuple
-
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 
-from tree_gan.utils import NonTerminal, Terminal
-
-DerivationSymbol = namedtuple('DerivationSymbol', ['name', 'parent_action'])
+from tree_gan.utils import NonTerminal, Terminal, DerivationSymbol
 
 
 class TreeGenerator(nn.Module):
@@ -45,10 +41,10 @@ class TreeGenerator(nn.Module):
         self.rnn = rnn_cls(input_size, hidden_size, **rnn_kwargs)
 
         self.padding_action = -1
-        self.action_offset = 1
+        self.universal_action_offset = 1
 
-        self.action_embeddings = nn.Embedding(num_of_rules + self.action_offset, action_embedding_size,
-                                              padding_idx=self.padding_action + self.action_offset)
+        self.action_embeddings = nn.Embedding(num_of_rules + self.universal_action_offset, action_embedding_size,
+                                              padding_idx=self.padding_action + self.universal_action_offset)
         self.action_layer = nn.Linear(hidden_size, num_of_rules)
         # nn.ParameterDict DOES NOT ACCEPT NON-STRING's AS KEY !!!!!!!!!!!!!!!!!!
         self.action_masks = nn.ParameterDict()
@@ -69,22 +65,23 @@ class TreeGenerator(nn.Module):
 
         return super(TreeGenerator, self).to(*args, **kwargs)
 
-    def forward(self):
+    def forward(self, max_sequence_length=None):
+        max_sequence_length = float('inf') if max_sequence_length is None else max_sequence_length
         # TODO: take batch_size as input and vectorize generation process !!!!
         # output: [seq_len, 1] OR [1, seq_len]
         seq_len_dim_index = int(self.batch_first)
         prev_state = self.rand_initial_state_func().to(self.device)
         prev_action = torch.tensor([self.padding_action], device=self.device)
-        symbol_stack = [DerivationSymbol(self.start_id, prev_action)]
+        symbol_stack = [DerivationSymbol(self.start_id, parent_action=prev_action)]
 
-        output = []
-        while symbol_stack:
+        action_list, parent_action_list = [], []
+        while symbol_stack and len(action_list) < max_sequence_length:
             symbol_id, parent_action = symbol_stack.pop()
             if isinstance(self.symbol_names[symbol_id], Terminal):
                 continue
 
-            prev_action_embedding = self.action_embeddings(prev_action + self.action_offset)
-            parent_action_embedding = self.action_embeddings(parent_action + self.action_offset)
+            prev_action_embedding = self.action_embeddings(prev_action + self.universal_action_offset)
+            parent_action_embedding = self.action_embeddings(parent_action + self.universal_action_offset)
             current_input = torch.cat([prev_action_embedding, parent_action_embedding], dim=-1).unsqueeze(
                 seq_len_dim_index)
             out, prev_state = self.rnn(current_input, prev_state)
@@ -93,7 +90,8 @@ class TreeGenerator(nn.Module):
             action_dist = Categorical(logits=action_log_prob.masked_fill_(
                 self.action_masks[str(symbol_id)].logical_not().unsqueeze(0), float('-inf')))
             action = action_dist.sample()
-            output.append(action.unsqueeze(seq_len_dim_index))
+            action_list.append(action.unsqueeze(seq_len_dim_index))
+            parent_action_list.append(parent_action.unsqueeze(seq_len_dim_index))
 
             for child_id in reversed(self.rules_dict[symbol_id][action.item() - self.action_offsets[symbol_id]]):
                 if isinstance(self.symbol_names[symbol_id], NonTerminal):
@@ -101,4 +99,5 @@ class TreeGenerator(nn.Module):
 
             prev_action = action
 
-        return torch.cat(output, dim=seq_len_dim_index), prev_state
+        return torch.cat(action_list, dim=seq_len_dim_index), torch.cat(parent_action_list,
+                                                                        dim=seq_len_dim_index)

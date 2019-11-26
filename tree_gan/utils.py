@@ -7,8 +7,31 @@ from collections import namedtuple
 
 import lark
 
-NonTerminal = namedtuple('NonTerminal', ['name'])
-Terminal = namedtuple('Terminal', ['name'])
+DerivationSymbol = namedtuple('DerivationSymbol', ['name', 'parent_action'])
+
+
+class _Symbol:
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, repr(self.name))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.name == other.name
+
+    def __hash__(self):
+        return hash(repr(self))
+
+
+class NonTerminal(_Symbol):
+    def __init__(self, name):
+        super(NonTerminal, self).__init__(name)
+
+
+class Terminal(_Symbol):
+    def __init__(self, name):
+        super(Terminal, self).__init__(name)
 
 
 class SimpleTree:
@@ -27,7 +50,7 @@ class SimpleTree:
                 symbol = NonTerminal(symbol.data) if isinstance(symbol, SimpleTree) else symbol
                 used_rule.append(symbol)
         else:
-            used_rule.append(NonTerminal(''))
+            used_rule.append(Terminal(''))
         return cls(tree.data, children, tuple(used_rule))
 
     def __repr__(self):
@@ -189,6 +212,15 @@ class SimpleTreeActionGetter:
                 if isinstance(child, SimpleTree):
                     id_tree_stack.append(child)
 
+    def construct_text_partial(self, actions, start='start'):
+        actions_iterator = iter(actions)
+        stream = io.StringIO()
+        try:
+            self._construct_text(self.symbol_names.index(NonTerminal(start)), actions_iterator, stream)
+        except StopIteration:
+            pass
+        return stream.getvalue()
+
     def construct_text(self, actions, start='start'):
         actions_iterator = iter(actions)
         stream = io.StringIO()
@@ -225,15 +257,70 @@ class SimpleTreeActionGetter:
                 used_rule_stack.pop()
                 symbol_count_stack.pop()
 
-    def lark_tree_to_id_tree(self, tree):
-        data = self.symbol_names.index(NonTerminal(tree.data))
-        children = [self.lark_tree_to_id_tree(child) if isinstance(child, lark.Tree) else self.symbol_names.index(
-            Terminal(child.value)) for child in tree.children]
-        used_rule = []
-        if children:
-            for child in children:
-                child = child.data if isinstance(child, SimpleTree) else child
-                used_rule.append(child)
-        else:
-            used_rule.append(self.symbol_names.index(NonTerminal('')))
-        return SimpleTree(data, children, tuple(used_rule))
+    def construct_parse_tree_partial(self, actions, start='start'):
+        action_iterator = iter(actions)
+        tree = SimpleTree()
+        try:
+            self._construct_parse_tree(self.symbol_names.index(NonTerminal(start)), action_iterator, tree)
+        except StopIteration:
+            pass
+        return tree
+
+    def construct_parse_tree(self, actions, start='start'):
+        action_iterator = iter(actions)
+        tree = SimpleTree()
+        self._construct_parse_tree(self.symbol_names.index(NonTerminal(start)), action_iterator, tree)
+        return tree
+
+    def _construct_parse_tree(self, non_terminal_id, actions_iterator, tree):
+        non_terminal_id_stack = [non_terminal_id]
+        tree_stack = [tree]
+        while non_terminal_id_stack:
+            non_terminal_id = non_terminal_id_stack.pop()
+            tree = tree_stack.pop()
+            action = next(actions_iterator)
+            tree.data = self.symbol_names[non_terminal_id].name
+            tree.children = []
+            tree.used_rule = tuple(self.symbol_names[symbol_id] for symbol_id in
+                                   self.rules_dict[non_terminal_id][action - self.action_offsets[non_terminal_id]])
+            for child in reversed(tree.used_rule):
+                if isinstance(child, NonTerminal):
+                    child_tree = SimpleTree()
+                    tree.children.append(child_tree)
+                    non_terminal_id_stack.append(self.symbol_names.index(child))
+                    tree_stack.append(child_tree)
+                else:
+                    tree.children.append(child)
+            tree.children = list(reversed(tree.children))
+
+    def simple_tree_to_id_tree(self, tree):
+        root_id_tree = SimpleTree()
+        non_terminal_id_stack = [self.symbol_names.index(NonTerminal(tree.data))]
+        id_tree_stack = [root_id_tree]
+        children_stack = [tree.children]
+        while non_terminal_id_stack:
+            non_terminal_id = non_terminal_id_stack.pop()
+            id_tree = id_tree_stack.pop()
+            children = children_stack.pop()
+            # Start filling the current id tree
+            id_tree.data = non_terminal_id
+            used_rule = []
+            if children:
+                for child in reversed(children):
+                    if isinstance(child, SimpleTree):
+                        symbol_id = self.symbol_names.index(NonTerminal(child.data))
+                        child_id_tree = SimpleTree()
+                        id_tree.children.append(child_id_tree)
+                        # Push next id trees to be filled
+                        non_terminal_id_stack.append(symbol_id)
+                        id_tree_stack.append(child_id_tree)
+                        children_stack.append(child.children)
+                    else:
+                        symbol_id = self.symbol_names.index(child)
+                        id_tree.children.append(symbol_id)
+                    used_rule.append(symbol_id)
+            else:
+                used_rule.append(self.symbol_names.index(Terminal('')))
+            id_tree.children = list(reversed(id_tree.children))
+            id_tree.used_rule = tuple(reversed(used_rule))
+        return root_id_tree
