@@ -5,6 +5,9 @@ from tree_gan.utils import NonTerminal
 
 
 class TreeDiscriminator(nn.Module):
+    """
+    Effectively the batch size of the actions and parent_actions inputs are both 1.
+    """
     def __init__(self, rules_dict, symbol_names, action_offsets, initial_state_func=None, start='start',
                  action_embedding_size=None, hidden_size=None, batch_first=False, rnn_cls=None, rnn_kwargs=None):
         super(TreeDiscriminator, self).__init__()
@@ -22,7 +25,7 @@ class TreeDiscriminator(nn.Module):
         if rnn_cls is None:
             rnn_cls = nn.GRU
             if rnn_kwargs is None:
-                rnn_kwargs = dict(num_layers=2, dropout=0.1)
+                rnn_kwargs = dict(num_layers=2, dropout=0.0)
             if self.initial_state_func is None:
                 num_layers = rnn_kwargs.get('num_layers', 1)
                 num_directions = int(rnn_kwargs.get('bidirectional', False)) + 1
@@ -43,7 +46,8 @@ class TreeDiscriminator(nn.Module):
 
         self.action_embeddings = nn.Embedding(num_of_rules + self.universal_action_offset, action_embedding_size,
                                               padding_idx=self.padding_action + self.universal_action_offset)
-        self.truth_layer = nn.Linear(hidden_size, 2)
+        num_directions = int(getattr(self.rnn, 'bidirectional', False)) + 1
+        self.truth_layer = nn.Linear(num_directions * hidden_size, 2)
         self.device = None
 
     def to(self, *args, **kwargs):
@@ -56,8 +60,11 @@ class TreeDiscriminator(nn.Module):
 
     def forward(self, actions, parent_actions):
         # TODO: take batch_size into account !!!!
-        # input: [seq_len, 1] OR [1, seq_len]
-        # output: [seq_len, 1, 2] OR [1, seq_len, 2]
+        # input: (seq_len, )
+        # output: (seq_len, 2)
+        batch_dim_index = 1 - int(self.batch_first)
+        actions = actions.unsqueeze(batch_dim_index)
+        parent_actions = parent_actions.unsqueeze(batch_dim_index)
         initial_state = self.initial_state_func().to(self.device)
         action_embeddings = self.action_embeddings(actions + self.universal_action_offset)
         parent_action_embeddings = self.action_embeddings(parent_actions + self.universal_action_offset)
@@ -65,4 +72,4 @@ class TreeDiscriminator(nn.Module):
         current_input = torch.cat([action_embeddings, parent_action_embeddings], dim=-1)
         out, _ = self.rnn(current_input, initial_state)
 
-        return torch.log_softmax(self.truth_layer(out), dim=-1)
+        return torch.log_softmax(self.truth_layer(out), dim=-1).squeeze(batch_dim_index)
