@@ -7,9 +7,8 @@ from collections import namedtuple
 from functools import wraps
 
 import hyperopt
-from hyperopt import pyll
-import numpy as np
 import torch
+from hyperopt import pyll
 
 
 class ReplayMemory(object):
@@ -38,7 +37,7 @@ class ReplayMemory(object):
         self._position = 0
 
 
-def normalize_tensor(tensor, eps=1e-8):
+def normalize_tensor(tensor, eps=1e-7):
     std = tensor.std()
     if torch.isnan(std):
         return tensor - tensor.mean()
