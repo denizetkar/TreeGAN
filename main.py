@@ -90,8 +90,8 @@ def main():
 
             # Optimize policy for K epochs:
             number_of_episodes = len(old_actions_list)
+            shuffled_episode_indexes = list(range(number_of_episodes))
             for _ in range(k_epochs):
-                shuffled_episode_indexes = list(range(number_of_episodes))
                 random.shuffle(shuffled_episode_indexes)
                 current_batch_steps = first_episode_in_batch = 0
                 # Perform update for each batch with 'batch_timestep' steps
