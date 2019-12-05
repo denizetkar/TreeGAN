@@ -59,7 +59,6 @@ class TreeDiscriminator(nn.Module):
         return super(TreeDiscriminator, self).to(*args, **kwargs)
 
     def forward(self, actions, parent_actions):
-        # TODO: take batch_size into account !!!!
         # input: (seq_len, )
         # output: (seq_len, 2)
         batch_dim_index = 1 - int(self.batch_first)
