@@ -101,7 +101,7 @@ def main():
     # HYPER PARAMETERS WITH DEFAULT VALUES: (device, random_seed, initial_generator)
     max_total_step = 10000       # min number of steps to take during training
     episode_timesteps = 5000     # max time steps in one episode
-    gamma = 0.9                  # discount factor
+    gamma = 0.99                 # discount factor
     gae_lambda = 0.95            # lambda value for td(lambda) returns
     eps_clip = 0.2               # clip parameter for PPO
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -118,6 +118,7 @@ def main():
     optimizer_betas = (0.5, 0.6)
     # -------------------------------------------------------
     batch_timestep = max(buffer_timestep // buffer_to_batch_ratio, 1)
+    t_max = (max_total_step - 1) // buffer_timestep + 1
     if random_seed is not None:
         random.seed(random_seed)
         np.random.seed(random_seed)
@@ -136,12 +137,12 @@ def main():
         tree_discriminator.load_state_dict(initial_discriminator.state_dict())
     if isinstance(initial_generator, TreeGenerator):
         tree_generator.load_state_dict(initial_generator.state_dict())
+    # TODO: Pre-train tree_generator with real data first !!!!!!
     tree_generator_old.load_state_dict(tree_generator.state_dict())
 
     discriminator_optimizer = tree_gan.optim.Ranger(tree_discriminator.parameters(), lr=lr, betas=optimizer_betas)
     generator_optimizer = tree_gan.optim.Ranger(tree_generator.parameters(), lr=lr, betas=optimizer_betas)
 
-    t_max = (max_total_step - 1) // buffer_timestep + 1
     episode_reward_list = train_generator(generator_optimizer, t_max, tree_generator, tree_generator_old,
                                           tree_discriminator, batch_timestep, max_total_step, episode_timesteps, gamma,
                                           gae_lambda, eps_clip, buffer_timestep, lr_decay_order, k_epochs)

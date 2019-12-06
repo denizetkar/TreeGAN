@@ -4,7 +4,7 @@ import pickle
 from lark import Lark
 from torch.utils.data import Dataset
 
-from tree_gan.utils import Enumerator, CustomBNFParser, SimpleTreeActionGetter, SimpleTree
+from tree_gan.parse_utils import Enumerator, CustomBNFParser, SimpleTreeActionGetter, SimpleTree
 
 
 class ActionSequenceDataset(Dataset):

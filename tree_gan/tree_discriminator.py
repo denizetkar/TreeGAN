@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from tree_gan.utils import NonTerminal
+from tree_gan.parse_utils import NonTerminal
 
 
 class TreeDiscriminator(nn.Module):

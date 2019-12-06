@@ -3,4 +3,4 @@ import tree_gan.optim as optim
 from .data_loader import ActionSequenceDataset
 from .tree_discriminator import TreeDiscriminator
 from .tree_generator import TreeGenerator
-from .utils import NonTerminal, Terminal, SimpleTree, Enumerator, CustomBNFParser, SimpleTreeActionGetter
+from .parse_utils import NonTerminal, Terminal, SimpleTree, Enumerator, CustomBNFParser, SimpleTreeActionGetter

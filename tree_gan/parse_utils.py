@@ -197,6 +197,7 @@ class SimpleTreeActionGetter:
             cum_sum += len(rules)
 
     def collect_actions(self, id_tree):
+        # TODO: Return parent_actions as well !!!!!!!!!!!!!!!
         actions = []
         self._collect_actions(id_tree, actions)
         return actions

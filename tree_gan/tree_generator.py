@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
 
-from tree_gan.utils import NonTerminal, Terminal, DerivationSymbol
+from tree_gan.parse_utils import NonTerminal, Terminal, DerivationSymbol
 
 
 class TreeGenerator(nn.Module):
