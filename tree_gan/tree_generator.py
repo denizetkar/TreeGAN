@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
 
-from tree_gan.parse_utils import NonTerminal, Terminal, DerivationSymbol
+from tree_gan.learning_utils import PADDING_ACTION, UNIVERSAL_ACTION_OFFSET
+from tree_gan.parse_utils import NonTerminal, DerivationSymbol
 
 
 class TreeGenerator(nn.Module):
@@ -11,15 +12,16 @@ class TreeGenerator(nn.Module):
     Effectively the batch size for both 'evaluate' and 'generate' functions are always 1
     AND never use bidirectional RNN !!!
     """
-    def __init__(self, rules_dict, symbol_names, action_offsets, rand_initial_state_func=None, start='start',
-                 action_embedding_size=None, hidden_size=None, batch_first=False, rnn_cls=None, rnn_kwargs=None):
-        super(TreeGenerator, self).__init__()
-        self.rules_dict = rules_dict
-        self.symbol_names = symbol_names
-        self.action_offsets = action_offsets
+    def __init__(self, action_getter, rand_initial_state_func=None, start='start', action_embedding_size=None,
+                 hidden_size=None, batch_first=False, rnn_cls=None, rnn_kwargs=None):
+        super().__init__()
+        self.rules_dict = action_getter.rules_dict
+        self.symbol_names = action_getter.symbol_names
+        self.action_offsets = action_getter.action_offsets
+        self.non_terminal_ids = action_getter.non_terminal_ids
         self.rand_initial_state_func = rand_initial_state_func
-        self.start_id = symbol_names.index(NonTerminal(start))
-        num_of_rules = sum(len(rules) for rules in rules_dict.values())
+        self.start_id = self.symbol_names.index(NonTerminal(start))
+        num_of_rules = sum(len(rules) for rules in self.rules_dict.values())
         if action_embedding_size is None:
             action_embedding_size = (num_of_rules - 1) // 4 + 1
         if hidden_size is None:
@@ -44,22 +46,19 @@ class TreeGenerator(nn.Module):
         input_size = action_embedding_size * 2
         self.rnn = rnn_cls(input_size, hidden_size, **rnn_kwargs)
 
-        self.padding_action = -1
-        self.universal_action_offset = 1
-
-        self.action_embeddings = nn.Embedding(num_of_rules + self.universal_action_offset, action_embedding_size,
-                                              padding_idx=self.padding_action + self.universal_action_offset)
+        self.action_embeddings = nn.Embedding(num_of_rules + UNIVERSAL_ACTION_OFFSET, action_embedding_size,
+                                              padding_idx=PADDING_ACTION + UNIVERSAL_ACTION_OFFSET)
         self.action_layer = nn.Linear(hidden_size, num_of_rules)
         self.value_layer = nn.Linear(hidden_size, 1)
-        # nn.ParameterDict DOES NOT ACCEPT NON-STRING's AS KEY !!!!!!!!!!!!!!!!!!
-        self.action_masks = nn.ParameterDict()
+        self.action_masks = nn.Parameter(torch.empty(len(self.non_terminal_ids), num_of_rules, dtype=torch.bool),
+                                         requires_grad=False)
         for non_terminal_id, rules in self.rules_dict.items():
             # Create the action mask for each non-terminal symbol
-            action_mask = nn.Parameter(torch.zeros(num_of_rules, dtype=torch.bool), requires_grad=False)
+            action_mask = torch.zeros(num_of_rules, dtype=torch.bool)
             first_action = self.action_offsets[non_terminal_id]
             last_action = first_action + len(rules)
             action_mask[first_action:last_action] = 1
-            self.action_masks[str(non_terminal_id)] = action_mask
+            self.action_masks[self.non_terminal_ids.index(non_terminal_id)].copy_(action_mask.data, non_blocking=True)
         self.lt_rewards_norm_layer = nn.BatchNorm1d(1, affine=False)
         self.advantages_norm_layer = nn.BatchNorm1d(1, affine=False)
         self.device = None
@@ -70,44 +69,15 @@ class TreeGenerator(nn.Module):
         elif kwargs and 'device' in kwargs:
             self.device = kwargs['device']
 
-        return super(TreeGenerator, self).to(*args, **kwargs)
+        return super().to(*args, **kwargs)
 
-    def forward(self, max_sequence_length=None, old_outputs=None):
-        if old_outputs:
-            return self.evaluate(old_outputs)
-        else:
-            return self.generate(max_sequence_length)
-
-    def evaluate(self, old_outputs):
-        # input/output dimensions: (seq_len, [specific_size]) depending on self.batch_first
-        seq_len_dim_index = int(self.batch_first)
-        old_initial_gen_state, old_actions, old_parent_actions = old_outputs
-        batch_dim_index = 1 - seq_len_dim_index
-        old_actions = old_actions.unsqueeze(batch_dim_index)
-        old_parent_actions = old_parent_actions.unsqueeze(batch_dim_index)
-
-        prev_action = torch.tensor([self.padding_action], device=self.device).unsqueeze(dim=seq_len_dim_index)
-        seq_len = old_actions.shape[seq_len_dim_index]
-        old_actions = torch.cat([prev_action, old_actions.narrow(seq_len_dim_index, 0, seq_len - 1)],
-                                dim=seq_len_dim_index)
-
-        action_embeddings = self.action_embeddings(old_actions + self.universal_action_offset)
-        parent_action_embeddings = self.action_embeddings(old_parent_actions + self.universal_action_offset)
-
-        current_input = torch.cat([action_embeddings, parent_action_embeddings], dim=-1)
-        out, _ = self.rnn(current_input, old_initial_gen_state)
-
-        log_probs = torch.log_softmax(self.action_layer(out), dim=-1)
-        values = self.value_layer(out).squeeze(-1)
-        return log_probs.squeeze(batch_dim_index), values.squeeze(batch_dim_index)
-
-    def generate(self, max_sequence_length=None):
-        # output dimensions: (seq_len, [specific_size]) depending on self.batch_first
+    def forward(self, max_sequence_length=None):
+        # output dimensions: (seq_len, [specific_size])
         max_sequence_length = float('inf') if max_sequence_length is None else max_sequence_length
         seq_len_dim_index = int(self.batch_first)
         initial_state = self.rand_initial_state_func().to(self.device)
         prev_state = initial_state
-        prev_action = torch.tensor([self.padding_action], device=self.device)
+        prev_action = torch.tensor([PADDING_ACTION], device=self.device)
         symbol_stack = [DerivationSymbol(self.start_id, parent_action=prev_action)]
 
         action_list, parent_action_list, log_prob_list, value_list = [], [], [], []
@@ -117,11 +87,6 @@ class TreeGenerator(nn.Module):
                 next_value = torch.zeros_like(value)
                 value_list.append(next_value.unsqueeze(seq_len_dim_index))
                 break
-
-            symbol_id, parent_action = symbol_stack.pop()
-            if isinstance(self.symbol_names[symbol_id], Terminal):
-                continue
-
             if len(action_list) > max_sequence_length:
                 # Action generation did not end before 'max_sequence_length'
                 action_list.pop()
@@ -129,16 +94,18 @@ class TreeGenerator(nn.Module):
                 log_prob_list.pop()
                 break
 
-            prev_action_embedding = self.action_embeddings(prev_action + self.universal_action_offset)
-            parent_action_embedding = self.action_embeddings(parent_action + self.universal_action_offset)
+            symbol_id, parent_action = symbol_stack.pop()
+
+            prev_action_embedding = self.action_embeddings(prev_action + UNIVERSAL_ACTION_OFFSET)
+            parent_action_embedding = self.action_embeddings(parent_action + UNIVERSAL_ACTION_OFFSET)
             current_input = torch.cat([prev_action_embedding, parent_action_embedding], dim=-1).unsqueeze(
                 seq_len_dim_index)
             # Get next action
             out, prev_state = self.rnn(current_input, prev_state)
             out = out.squeeze(seq_len_dim_index)
             log_prob = torch.log_softmax(self.action_layer(out), dim=-1)
-            action_dist = Categorical(logits=log_prob.masked_fill_(
-                self.action_masks[str(symbol_id)].logical_not().unsqueeze(0), float('-inf')))
+            action_dist = Categorical(logits=log_prob.masked_fill(
+                self.action_masks[self.non_terminal_ids.index(symbol_id)].logical_not().unsqueeze(0), float('-inf')))
             action = action_dist.sample()
             # Get next (state) value
             value = self.value_layer(out).squeeze(-1)
@@ -148,7 +115,7 @@ class TreeGenerator(nn.Module):
             value_list.append(value.unsqueeze(seq_len_dim_index))
 
             for child_id in reversed(self.rules_dict[symbol_id][action.item() - self.action_offsets[symbol_id]]):
-                if isinstance(self.symbol_names[symbol_id], NonTerminal):
+                if isinstance(self.symbol_names[child_id], NonTerminal):
                     symbol_stack.append(DerivationSymbol(child_id, parent_action=action))
 
             prev_action = action
@@ -159,6 +126,29 @@ class TreeGenerator(nn.Module):
         log_probs = torch.cat(log_prob_list, dim=seq_len_dim_index).squeeze(batch_dim_index)
         values = torch.cat(value_list, dim=seq_len_dim_index).squeeze(batch_dim_index)
         return initial_state, actions, parent_actions, log_probs, values
+
+    def evaluate(self, old_initial_gen_state, old_actions, old_parent_actions):
+        # input/output dimensions: (seq_len, [specific_size])
+        seq_len_dim_index = int(self.batch_first)
+        batch_dim_index = 1 - seq_len_dim_index
+        old_actions = old_actions.unsqueeze(batch_dim_index)
+        old_parent_actions = old_parent_actions.unsqueeze(batch_dim_index)
+
+        prev_action = torch.tensor([PADDING_ACTION], device=self.device).unsqueeze(dim=seq_len_dim_index)
+        seq_len = old_actions.shape[seq_len_dim_index]
+        old_actions = torch.cat([prev_action, old_actions.narrow(seq_len_dim_index, 0, seq_len - 1)],
+                                dim=seq_len_dim_index)
+
+        action_embeddings = self.action_embeddings(old_actions + UNIVERSAL_ACTION_OFFSET)
+        parent_action_embeddings = self.action_embeddings(old_parent_actions + UNIVERSAL_ACTION_OFFSET)
+
+        current_input = torch.cat([action_embeddings, parent_action_embeddings], dim=-1)
+        out, _ = self.rnn(current_input, old_initial_gen_state)
+
+        log_probs = torch.log_softmax(self.action_layer(out), dim=-1)
+        values = self.value_layer(out).squeeze(-1)
+        # TODO: mask out irrelevant log_probs with float('-inf') and run it through Categorical(logits=log_probs).logits
+        return log_probs.squeeze(batch_dim_index), values.squeeze(batch_dim_index)
 
     def ppo_losses(self, old_initial_gen_state_list, old_actions_list, old_parent_actions_list,
                    old_log_probs_list, old_values_list, old_lt_rewards_list, eps_clip):
@@ -178,7 +168,7 @@ class TreeGenerator(nn.Module):
             except ValueError:
                 # Error is most likely due to giving 1 sample to batchnorm layer
                 continue
-            log_probs, values = self(old_outputs=(old_initial_gen_state, old_actions, old_parent_actions))
+            log_probs, values = self.evaluate(old_initial_gen_state, old_actions, old_parent_actions)
 
             restriction_mask = torch.isinf(old_log_probs)
             action_dist = Categorical(logits=log_probs.masked_fill(restriction_mask, float('-inf')))

@@ -7,6 +7,8 @@ from collections import namedtuple
 
 import lark
 
+from tree_gan.learning_utils import PADDING_ACTION
+
 DerivationSymbol = namedtuple('DerivationSymbol', ['name', 'parent_action'])
 
 
@@ -26,12 +28,12 @@ class _Symbol:
 
 class NonTerminal(_Symbol):
     def __init__(self, name):
-        super(NonTerminal, self).__init__(name)
+        super().__init__(name)
 
 
 class Terminal(_Symbol):
     def __init__(self, name):
-        super(Terminal, self).__init__(name)
+        super().__init__(name)
 
 
 class SimpleTree:
@@ -191,27 +193,30 @@ class SimpleTreeActionGetter:
         self.rules_dict = rules_dict
         self.symbol_names = symbol_names
         self.action_offsets = {}
+        self.non_terminal_ids = Enumerator(rules_dict.keys())
         cum_sum = 0
         for non_terminal_id, rules in rules_dict.items():
             self.action_offsets[non_terminal_id] = cum_sum
             cum_sum += len(rules)
 
     def collect_actions(self, id_tree):
-        # TODO: Return parent_actions as well !!!!!!!!!!!!!!!
-        actions = []
-        self._collect_actions(id_tree, actions)
-        return actions
+        actions, parent_actions = [], []
+        self._collect_actions(id_tree, actions, parent_actions)
+        return actions, parent_actions
 
-    def _collect_actions(self, id_tree, actions):
+    def _collect_actions(self, id_tree, actions, parent_actions):
         id_tree_stack = [id_tree]
+        parent_action_stack = [PADDING_ACTION]
         while id_tree_stack:
             id_tree = id_tree_stack.pop()
             non_terminal_id = id_tree.data
             action = self.action_offsets[non_terminal_id] + self.rules_dict[non_terminal_id].index(id_tree.used_rule)
             actions.append(action)
+            parent_actions.append(parent_action_stack.pop())
             for child in reversed(id_tree.children):
                 if isinstance(child, SimpleTree):
                     id_tree_stack.append(child)
+                    parent_action_stack.append(action)
 
     def construct_text_partial(self, actions, start='start'):
         actions_iterator = iter(actions)

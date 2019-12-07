@@ -6,6 +6,9 @@ import hyperopt
 import torch
 from hyperopt import pyll
 
+PADDING_ACTION = -1
+UNIVERSAL_ACTION_OFFSET = 1
+
 
 class ReplayMemory(object):
 

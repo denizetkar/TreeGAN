@@ -4,6 +4,8 @@ import time
 
 import numpy as np
 import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
 
 import tree_gan
 from tree_gan import ActionSequenceDataset, TreeGenerator, TreeDiscriminator
@@ -18,7 +20,7 @@ def train_generator(generator_optimizer, t_max, tree_generator, tree_generator_o
                                                        log_order=lr_decay_order)
 
     episode_reward_list = []
-    episode_memory = tree_gan.helper.ReplayMemory(buffer_timestep + episode_timesteps, (
+    episode_memory = tree_gan.learning_utils.ReplayMemory(buffer_timestep + episode_timesteps, (
         'initial_gen_state', 'actions', 'parent_actions', 'log_probs', 'values', 'lt_rewards'))
     buffer_step = total_step = 0
     # Start training loop
@@ -28,7 +30,7 @@ def train_generator(generator_optimizer, t_max, tree_generator, tree_generator_o
             initial_gen_state, actions, parent_actions, log_probs, values = tree_generator_old(episode_steps)
             truth_log_probs = tree_discriminator(actions, parent_actions)
         rewards = torch.exp(truth_log_probs).select(dim=-1, index=int(True))
-        lt_rewards = tree_gan.helper.td_lambda_returns(rewards, values, gamma, gae_lambda)
+        lt_rewards = tree_gan.learning_utils.td_lambda_returns(rewards, values, gamma, gae_lambda)
         values = values[:-1]
         buffer_step += actions.nelement()
         total_step += actions.nelement()
@@ -108,14 +110,17 @@ def main():
     device = torch.device('cuda')  # TODO: make default value torch.device('cpu')
 
     random_seed = 1234  # TODO: make default value None
-    initial_discriminator = None
     initial_generator = None
+    initial_discriminator = None
     lr = 3e-4
     buffer_timestep = 5000
     lr_decay_order = 5
     k_epochs = 5
     buffer_to_batch_ratio = 5
     optimizer_betas = (0.5, 0.6)
+    # PRE-TRAINING HYPER PARAMETERS
+    pre_train_epochs = 6
+    pre_train_batch_size = 1
     # -------------------------------------------------------
     batch_timestep = max(buffer_timestep // buffer_to_batch_ratio, 1)
     t_max = (max_total_step - 1) // buffer_timestep + 1
@@ -126,22 +131,42 @@ def main():
 
     a_s_dataset = ActionSequenceDataset(reduced_C_bnf_path, reduced_C_lark_path, reduced_C_text_dir,
                                         reduced_C_action_getter_path, reduced_C_action_sequences_dir)
-    tree_generator = TreeGenerator(a_s_dataset.action_getter.rules_dict, a_s_dataset.action_getter.symbol_names,
-                                   a_s_dataset.action_getter.action_offsets).to(device)
-    tree_generator_old = TreeGenerator(a_s_dataset.action_getter.rules_dict, a_s_dataset.action_getter.symbol_names,
-                                       a_s_dataset.action_getter.action_offsets).to(device)
-    tree_discriminator = TreeDiscriminator(a_s_dataset.action_getter.rules_dict, a_s_dataset.action_getter.symbol_names,
-                                           a_s_dataset.action_getter.action_offsets).to(device)
+    tree_generator = TreeGenerator(a_s_dataset.action_getter).to(device)
+    tree_generator_old = TreeGenerator(a_s_dataset.action_getter).to(device)
+    tree_discriminator = TreeDiscriminator(a_s_dataset.action_getter).to(device)
 
-    if isinstance(initial_discriminator, TreeDiscriminator):
-        tree_discriminator.load_state_dict(initial_discriminator.state_dict())
     if isinstance(initial_generator, TreeGenerator):
         tree_generator.load_state_dict(initial_generator.state_dict())
-    # TODO: Pre-train tree_generator with real data first !!!!!!
-    tree_generator_old.load_state_dict(tree_generator.state_dict())
+    if isinstance(initial_discriminator, TreeDiscriminator):
+        tree_discriminator.load_state_dict(initial_discriminator.state_dict())
 
-    discriminator_optimizer = tree_gan.optim.Ranger(tree_discriminator.parameters(), lr=lr, betas=optimizer_betas)
     generator_optimizer = tree_gan.optim.Ranger(tree_generator.parameters(), lr=lr, betas=optimizer_betas)
+    discriminator_optimizer = tree_gan.optim.Ranger(tree_discriminator.parameters(), lr=lr, betas=optimizer_betas)
+
+    a_s_dataloader = DataLoader(a_s_dataset, batch_size=1, shuffle=True, num_workers=1,
+                                pin_memory=torch.cuda.is_available())
+    ce_loss_func = nn.CrossEntropyLoss()
+    for _ in range(pre_train_epochs):
+        current_batch_size, loss = 0, 0.0
+        for action_sequence, parent_action_sequence in a_s_dataloader:
+            current_batch_size += 1
+            initial_gen_state = tree_generator.rand_initial_state_func().to(device)
+            action_sequence = action_sequence.squeeze().to(device)
+            parent_action_sequence = parent_action_sequence.squeeze().to(device)
+            log_probs, _ = tree_generator.evaluate(initial_gen_state, action_sequence, parent_action_sequence)
+            loss += ce_loss_func(log_probs, action_sequence) / pre_train_batch_size
+            if current_batch_size == pre_train_batch_size:
+                generator_optimizer.zero_grad()
+                loss.backward()
+                generator_optimizer.step()
+                current_batch_size, loss = 0, 0.0
+        if current_batch_size != 0:
+            generator_optimizer.zero_grad()
+            loss.backward()
+            generator_optimizer.step()
+        del loss
+
+    tree_generator_old.load_state_dict(tree_generator.state_dict())
 
     episode_reward_list = train_generator(generator_optimizer, t_max, tree_generator, tree_generator_old,
                                           tree_discriminator, batch_timestep, max_total_step, episode_timesteps, gamma,
@@ -155,8 +180,8 @@ def main():
         # Generate an action sequence (equivalent to parse tree or text file)
         _, generated_actions, _, _, _ = tree_generator(max_sequence_length=episode_timesteps)
 
-    action_sequence = a_s_dataset[a_s_dataset.index('code.c')]
-    print(a_s_dataset.action_getter.construct_text(action_sequence))
+    action_sequence, _ = a_s_dataset[a_s_dataset.index('code.c')]
+    print(a_s_dataset.action_getter.construct_text(action_sequence.numpy().tolist()))
     print('---------------------------------')
     print(a_s_dataset.action_getter.construct_text_partial(generated_actions.squeeze().cpu().numpy().tolist()))
     print('---------------------------------')
