@@ -75,7 +75,7 @@ class TreeGenerator(nn.Module):
         # output dimensions: (seq_len, [specific_size])
         max_sequence_length = float('inf') if max_sequence_length is None else max_sequence_length
         seq_len_dim_index = int(self.batch_first)
-        initial_state = self.rand_initial_state_func().to(self.device)
+        initial_state = self.rand_initial_state_func().to(self.device, non_blocking=True)
         prev_state = initial_state
         prev_action = torch.tensor([PADDING_ACTION], device=self.device)
         symbol_stack = [DerivationSymbol(self.start_id, parent_action=prev_action)]

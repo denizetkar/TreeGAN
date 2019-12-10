@@ -20,21 +20,23 @@ def pre_train_generator(tree_generator, generator_optimizer, a_s_dataloader,
         current_batch_size, loss = 0, 0.0
         for action_sequence, parent_action_sequence in a_s_dataloader:
             current_batch_size += 1
-            initial_gen_state = tree_generator.rand_initial_state_func().to(device)
-            action_sequence = action_sequence.squeeze().to(device)
-            parent_action_sequence = parent_action_sequence.squeeze().to(device)
-            log_probs, _ = tree_generator.evaluate(initial_gen_state, action_sequence, parent_action_sequence)
+            initial_gen_state = tree_generator.rand_initial_state_func().to(device, non_blocking=True)
+            action_sequence = action_sequence.squeeze().to(device, non_blocking=True)
+            parent_action_sequence = parent_action_sequence.squeeze().to(device, non_blocking=True)
+            log_probs, values = tree_generator.evaluate(initial_gen_state, action_sequence, parent_action_sequence)
+            del values
             loss += ce_loss_func(log_probs, action_sequence) / pre_train_batch_size
             if current_batch_size == pre_train_batch_size:
                 generator_optimizer.zero_grad()
                 loss.backward()
                 generator_optimizer.step()
                 current_batch_size, loss = 0, 0.0
+                del log_probs
         if current_batch_size != 0:
             generator_optimizer.zero_grad()
             loss.backward()
             generator_optimizer.step()
-        del loss
+            del log_probs
 
 
 def train_discriminator(tree_generator, tree_discriminator, discriminator_optimizer, a_s_dataloader, episode_timesteps,
@@ -48,8 +50,8 @@ def train_discriminator(tree_generator, tree_discriminator, discriminator_optimi
             current_batch_size += 1
             # Calculate the loss for this real sequence
             # Action sequences arrive with batch dimension of size 1 from the data loader (squeeze it!):
-            real_actions = real_actions.squeeze().to(device)
-            real_parent_actions = real_parent_actions.squeeze().to(device)
+            real_actions = real_actions.squeeze().to(device, non_blocking=True)
+            real_parent_actions = real_parent_actions.squeeze().to(device, non_blocking=True)
             truth_log_probs = tree_discriminator(real_actions, real_parent_actions)
             loss += ce_loss_func(truth_log_probs,
                                  real_label.expand(len(truth_log_probs))) / discriminator_train_batch_size
@@ -64,11 +66,12 @@ def train_discriminator(tree_generator, tree_discriminator, discriminator_optimi
                 loss.backward()
                 discriminator_optimizer.step()
                 current_batch_size, loss = 0, 0.0
+                del truth_log_probs
         if current_batch_size != 0:
             discriminator_optimizer.zero_grad()
             loss.backward()
             discriminator_optimizer.step()
-        del loss
+            del truth_log_probs
 
 
 def train_generator(generator_optimizer, t_max, tree_generator, tree_generator_old, tree_discriminator, batch_timestep,
@@ -94,6 +97,7 @@ def train_generator(generator_optimizer, t_max, tree_generator, tree_generator_o
         total_step += actions.nelement()
         episode_reward_list.append(rewards.mean().item())
         episode_memory.push(initial_gen_state, actions, parent_actions, log_probs, values, lt_rewards)
+        del initial_gen_state, actions, parent_actions, log_probs, values, lt_rewards, truth_log_probs, rewards
 
         if buffer_step >= buffer_timestep:
             old_initial_gen_state_list, old_actions_list, old_parent_actions_list, old_log_probs_list, \
@@ -134,9 +138,12 @@ def train_generator(generator_optimizer, t_max, tree_generator, tree_generator_o
                         generator_optimizer.zero_grad()
                         loss.backward()
                         generator_optimizer.step()
+                        del loss
 
                     first_episode_in_batch = last_episode_in_batch + 1
                     current_batch_steps = 0
+            del old_initial_gen_state_list, old_actions_list, old_parent_actions_list, \
+                old_log_probs_list, old_values_list, old_lt_rewards_list
             # Copy new weights into old policy:
             tree_generator_old.load_state_dict(tree_generator.state_dict())
 
@@ -177,10 +184,10 @@ def main():
     optimizer_betas = (0.5, 0.75)
     # PRE-TRAINING HYPER PARAMETERS
     pre_train_epochs = 6
-    pre_train_batch_size = 3
+    pre_train_batch_size = 2
     # DISCRIMINATOR TRAINING HYPER PARAMETERS
-    discriminator_train_epochs = 3
-    discriminator_train_batch_size = 4
+    discriminator_train_epochs = 1
+    discriminator_train_batch_size = 2
     # -------------------------------------------------------
     batch_timestep = max(buffer_timestep // buffer_to_batch_ratio, 1)
     t_max = (max_total_step - 1) // buffer_timestep + 1
@@ -191,9 +198,12 @@ def main():
 
     a_s_dataset = ActionSequenceDataset(reduced_C_bnf_path, reduced_C_lark_path, reduced_C_text_dir,
                                         reduced_C_action_getter_path, reduced_C_action_sequences_dir)
-    tree_generator = TreeGenerator(a_s_dataset.action_getter).to(device)
-    tree_generator_old = TreeGenerator(a_s_dataset.action_getter).to(device)
-    tree_discriminator = TreeDiscriminator(a_s_dataset.action_getter).to(device)
+    tree_generator = TreeGenerator(a_s_dataset.action_getter, action_embedding_size=128).to(
+        device, non_blocking=True)
+    tree_generator_old = TreeGenerator(a_s_dataset.action_getter, action_embedding_size=128).to(
+        device, non_blocking=True)
+    tree_discriminator = TreeDiscriminator(a_s_dataset.action_getter, action_embedding_size=128).to(
+        device, non_blocking=True)
 
     if isinstance(initial_generator, TreeGenerator):
         tree_generator.load_state_dict(initial_generator.state_dict())

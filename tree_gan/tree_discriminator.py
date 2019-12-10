@@ -62,7 +62,7 @@ class TreeDiscriminator(nn.Module):
         batch_dim_index = 1 - int(self.batch_first)
         actions = actions.unsqueeze(batch_dim_index)
         parent_actions = parent_actions.unsqueeze(batch_dim_index)
-        initial_state = self.initial_state_func().to(self.device)
+        initial_state = self.initial_state_func().to(self.device, non_blocking=True)
         action_embeddings = self.action_embeddings(actions + UNIVERSAL_ACTION_OFFSET)
         parent_action_embeddings = self.action_embeddings(parent_actions + UNIVERSAL_ACTION_OFFSET)
 
