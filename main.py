@@ -13,6 +13,64 @@ from tree_gan import ActionSequenceDataset, TreeGenerator, TreeDiscriminator
 torch.set_default_dtype(torch.float32)
 
 
+def pre_train_generator(tree_generator, generator_optimizer, a_s_dataloader,
+                        pre_train_epochs, pre_train_batch_size, device):
+    ce_loss_func = nn.CrossEntropyLoss()
+    for _ in range(pre_train_epochs):
+        current_batch_size, loss = 0, 0.0
+        for action_sequence, parent_action_sequence in a_s_dataloader:
+            current_batch_size += 1
+            initial_gen_state = tree_generator.rand_initial_state_func().to(device)
+            action_sequence = action_sequence.squeeze().to(device)
+            parent_action_sequence = parent_action_sequence.squeeze().to(device)
+            log_probs, _ = tree_generator.evaluate(initial_gen_state, action_sequence, parent_action_sequence)
+            loss += ce_loss_func(log_probs, action_sequence) / pre_train_batch_size
+            if current_batch_size == pre_train_batch_size:
+                generator_optimizer.zero_grad()
+                loss.backward()
+                generator_optimizer.step()
+                current_batch_size, loss = 0, 0.0
+        if current_batch_size != 0:
+            generator_optimizer.zero_grad()
+            loss.backward()
+            generator_optimizer.step()
+        del loss
+
+
+def train_discriminator(tree_generator, tree_discriminator, discriminator_optimizer, a_s_dataloader, episode_timesteps,
+                        discriminator_train_epochs, discriminator_train_batch_size, device):
+    ce_loss_func = nn.CrossEntropyLoss()
+    real_label = torch.tensor(1, device=device)
+    fake_label = torch.tensor(0, device=device)
+    for _ in range(discriminator_train_epochs):
+        current_batch_size, loss = 0, 0.0
+        for real_actions, real_parent_actions in a_s_dataloader:
+            current_batch_size += 1
+            # Calculate the loss for this real sequence
+            # Action sequences arrive with batch dimension of size 1 from the data loader (squeeze it!):
+            real_actions = real_actions.squeeze().to(device)
+            real_parent_actions = real_parent_actions.squeeze().to(device)
+            truth_log_probs = tree_discriminator(real_actions, real_parent_actions)
+            loss += ce_loss_func(truth_log_probs,
+                                 real_label.expand(len(truth_log_probs))) / discriminator_train_batch_size
+            # 1 fake sequence for each real sequence
+            with torch.no_grad():
+                _, fake_actions, fake_parent_actions, _, _ = tree_generator(max_sequence_length=episode_timesteps)
+            truth_log_probs = tree_discriminator(fake_actions, fake_parent_actions)
+            loss += ce_loss_func(truth_log_probs,
+                                 fake_label.expand(len(truth_log_probs))) / discriminator_train_batch_size
+            if current_batch_size == discriminator_train_batch_size:
+                discriminator_optimizer.zero_grad()
+                loss.backward()
+                discriminator_optimizer.step()
+                current_batch_size, loss = 0, 0.0
+        if current_batch_size != 0:
+            discriminator_optimizer.zero_grad()
+            loss.backward()
+            discriminator_optimizer.step()
+        del loss
+
+
 def train_generator(generator_optimizer, t_max, tree_generator, tree_generator_old, tree_discriminator, batch_timestep,
                     max_total_step, episode_timesteps, gamma, gae_lambda, eps_clip, buffer_timestep, lr_decay_order,
                     k_epochs):
@@ -101,26 +159,28 @@ def main():
 
     # ------------------HYPER PARAMETERS---------------------
     # HYPER PARAMETERS WITH DEFAULT VALUES: (device, random_seed, initial_generator)
-    max_total_step = 10000       # min number of steps to take during training
+    max_total_step = 50000       # min number of steps to take during training
     episode_timesteps = 5000     # max time steps in one episode
     gamma = 0.99                 # discount factor
     gae_lambda = 0.95            # lambda value for td(lambda) returns
     eps_clip = 0.2               # clip parameter for PPO
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device = torch.device('cuda')  # TODO: make default value torch.device('cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     random_seed = 1234  # TODO: make default value None
     initial_generator = None
     initial_discriminator = None
-    lr = 3e-4
-    buffer_timestep = 5000
+    lr = 1e-4
+    buffer_timestep = 10000
     lr_decay_order = 5
     k_epochs = 5
     buffer_to_batch_ratio = 5
-    optimizer_betas = (0.5, 0.6)
+    optimizer_betas = (0.5, 0.75)
     # PRE-TRAINING HYPER PARAMETERS
     pre_train_epochs = 6
-    pre_train_batch_size = 1
+    pre_train_batch_size = 3
+    # DISCRIMINATOR TRAINING HYPER PARAMETERS
+    discriminator_train_epochs = 3
+    discriminator_train_batch_size = 4
     # -------------------------------------------------------
     batch_timestep = max(buffer_timestep // buffer_to_batch_ratio, 1)
     t_max = (max_total_step - 1) // buffer_timestep + 1
@@ -143,30 +203,15 @@ def main():
     generator_optimizer = tree_gan.optim.Ranger(tree_generator.parameters(), lr=lr, betas=optimizer_betas)
     discriminator_optimizer = tree_gan.optim.Ranger(tree_discriminator.parameters(), lr=lr, betas=optimizer_betas)
 
-    a_s_dataloader = DataLoader(a_s_dataset, batch_size=1, shuffle=True, num_workers=1,
+    a_s_dataloader = DataLoader(a_s_dataset, batch_size=1, shuffle=True, num_workers=4,
                                 pin_memory=torch.cuda.is_available())
-    ce_loss_func = nn.CrossEntropyLoss()
-    for _ in range(pre_train_epochs):
-        current_batch_size, loss = 0, 0.0
-        for action_sequence, parent_action_sequence in a_s_dataloader:
-            current_batch_size += 1
-            initial_gen_state = tree_generator.rand_initial_state_func().to(device)
-            action_sequence = action_sequence.squeeze().to(device)
-            parent_action_sequence = parent_action_sequence.squeeze().to(device)
-            log_probs, _ = tree_generator.evaluate(initial_gen_state, action_sequence, parent_action_sequence)
-            loss += ce_loss_func(log_probs, action_sequence) / pre_train_batch_size
-            if current_batch_size == pre_train_batch_size:
-                generator_optimizer.zero_grad()
-                loss.backward()
-                generator_optimizer.step()
-                current_batch_size, loss = 0, 0.0
-        if current_batch_size != 0:
-            generator_optimizer.zero_grad()
-            loss.backward()
-            generator_optimizer.step()
-        del loss
+    pre_train_generator(tree_generator, generator_optimizer, a_s_dataloader,
+                        pre_train_epochs, pre_train_batch_size, device)
 
     tree_generator_old.load_state_dict(tree_generator.state_dict())
+
+    train_discriminator(tree_generator, tree_discriminator, discriminator_optimizer, a_s_dataloader, episode_timesteps,
+                        discriminator_train_epochs, discriminator_train_batch_size, device)
 
     episode_reward_list = train_generator(generator_optimizer, t_max, tree_generator, tree_generator_old,
                                           tree_discriminator, batch_timestep, max_total_step, episode_timesteps, gamma,
