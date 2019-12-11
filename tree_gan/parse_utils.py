@@ -7,7 +7,7 @@ from collections import namedtuple
 
 import lark
 
-from tree_gan.learning_utils import PADDING_ACTION
+from tree_gan import learning_utils
 
 DerivationSymbol = namedtuple('DerivationSymbol', ['name', 'parent_action'])
 
@@ -206,7 +206,7 @@ class SimpleTreeActionGetter:
 
     def _collect_actions(self, id_tree, actions, parent_actions):
         id_tree_stack = [id_tree]
-        parent_action_stack = [PADDING_ACTION]
+        parent_action_stack = [learning_utils.PADDING_ACTION]
         while id_tree_stack:
             id_tree = id_tree_stack.pop()
             non_terminal_id = id_tree.data

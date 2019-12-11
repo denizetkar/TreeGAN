@@ -7,14 +7,23 @@ import torch
 from torch.optim.optimizer import Optimizer
 
 
+class CosineLogAnnealingScale:
+    def __init__(self, T_max, log_order):
+        self.T_max = T_max
+        self.log_order = max(log_order, -2.5)
+        self.T_logT_max = T_max * math.log2(T_max + 2) ** log_order
+
+    def get_scale(self, epoch):
+        return (1 - math.cos(math.pi * (-epoch + self.T_max) * math.log2(
+            (-epoch + self.T_max) + 2) ** self.log_order / self.T_logT_max)) / 2
+
+
 class CosineLogAnnealingLR:
 
     def __init__(self, optimizer, T_max, eta_min=0, log_order=1.0, last_epoch=-1):
-        self.T_max = T_max
         self.eta_min = eta_min
         # IF log_order == 0 THEN the scheduling is same as torch.optim.lr_scheduler.CosineAnnealingLR
-        self.log_order = max(log_order, -2.5)
-        self.T_logT_max = T_max * math.log2(T_max + 2)**log_order
+        self.cos_log_scale = CosineLogAnnealingScale(T_max, log_order)
 
         if not isinstance(optimizer, torch.optim.Adam.__bases__):
             raise TypeError('{} is not an Optimizer'.format(
@@ -82,12 +91,8 @@ class CosineLogAnnealingLR:
         """
         self.__dict__.update(state_dict)
 
-    def get_scale(self, epoch):
-        return (1 - math.cos(math.pi * (-epoch + self.T_max) * math.log2(
-            (-epoch + self.T_max) + 2) ** self.log_order / self.T_logT_max)) / 2
-
     def get_lr(self):
-        return [self.eta_min + (base_lr - self.eta_min) * self.get_scale(self.last_epoch)
+        return [self.eta_min + (base_lr - self.eta_min) * self.cos_log_scale.get_scale(self.last_epoch)
                 for base_lr in self.base_lrs]
 
     def step(self, epoch=None):

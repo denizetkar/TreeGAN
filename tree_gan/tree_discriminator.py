@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from tree_gan.learning_utils import PADDING_ACTION, UNIVERSAL_ACTION_OFFSET
-from tree_gan.parse_utils import NonTerminal
+from tree_gan import learning_utils
+from tree_gan import parse_utils
 
 
 class TreeDiscriminator(nn.Module):
@@ -16,7 +16,7 @@ class TreeDiscriminator(nn.Module):
         self.symbol_names = action_getter.symbol_names
         self.action_offsets = action_getter.action_offsets
         self.initial_state_func = initial_state_func
-        self.start_id = self.symbol_names.index(NonTerminal(start))
+        self.start_id = self.symbol_names.index(parse_utils.NonTerminal(start))
         num_of_rules = sum(len(rules) for rules in self.rules_dict.values())
         if action_embedding_size is None:
             action_embedding_size = (num_of_rules - 1) // 4 + 1
@@ -42,19 +42,33 @@ class TreeDiscriminator(nn.Module):
         input_size = action_embedding_size * 2
         self.rnn = rnn_cls(input_size, hidden_size, **rnn_kwargs)
 
-        self.action_embeddings = nn.Embedding(num_of_rules + UNIVERSAL_ACTION_OFFSET, action_embedding_size,
-                                              padding_idx=PADDING_ACTION + UNIVERSAL_ACTION_OFFSET)
+        self.action_embeddings = nn.Embedding(num_of_rules + learning_utils.UNIVERSAL_ACTION_OFFSET,
+                                              action_embedding_size,
+                                              padding_idx=learning_utils.PADDING_ACTION +
+                                                          learning_utils.UNIVERSAL_ACTION_OFFSET)
         num_directions = int(getattr(self.rnn, 'bidirectional', False)) + 1
         self.truth_layer = nn.Linear(num_directions * hidden_size, 2)
         self.device = None
 
+    def cpu(self):
+        res = super().cpu()
+        self.device = 'cpu'
+        return res
+
+    def cuda(self, device=None):
+        res = super().cuda(device=device)
+        self.device = 'cuda' if device is None else device
+        return res
+
     def to(self, *args, **kwargs):
+        res = super().to(*args, **kwargs)
+
         if args and (isinstance(args[0], torch.device) or ('cuda' in args[0]) or ('cpu' in args[0])):
             self.device = args[0]
         elif kwargs and 'device' in kwargs:
             self.device = kwargs['device']
 
-        return super().to(*args, **kwargs)
+        return res
 
     def forward(self, actions, parent_actions):
         # input: (seq_len, )
@@ -63,8 +77,8 @@ class TreeDiscriminator(nn.Module):
         actions = actions.unsqueeze(batch_dim_index)
         parent_actions = parent_actions.unsqueeze(batch_dim_index)
         initial_state = self.initial_state_func().to(self.device, non_blocking=True)
-        action_embeddings = self.action_embeddings(actions + UNIVERSAL_ACTION_OFFSET)
-        parent_action_embeddings = self.action_embeddings(parent_actions + UNIVERSAL_ACTION_OFFSET)
+        action_embeddings = self.action_embeddings(actions + learning_utils.UNIVERSAL_ACTION_OFFSET)
+        parent_action_embeddings = self.action_embeddings(parent_actions + learning_utils.UNIVERSAL_ACTION_OFFSET)
 
         current_input = torch.cat([action_embeddings, parent_action_embeddings], dim=-1)
         out, _ = self.rnn(current_input, initial_state)

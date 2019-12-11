@@ -5,7 +5,7 @@ from lark import Lark
 import torch
 from torch.utils.data import Dataset
 
-from tree_gan.parse_utils import Enumerator, CustomBNFParser, SimpleTreeActionGetter, SimpleTree
+from tree_gan import parse_utils
 
 
 class ActionSequenceDataset(Dataset):
@@ -15,7 +15,7 @@ class ActionSequenceDataset(Dataset):
         self.texts_dir = texts_dir
         self.action_sequences_dir = action_sequences_dir
         self.start = start
-        self.text_filenames = Enumerator(
+        self.text_filenames = parse_utils.Enumerator(
             [dir_entry.name for dir_entry in os.scandir(texts_dir) if dir_entry.is_file()])
         # Get rule dictionary of the language
         # First check if action getter already exists, if not then parse the language grammar to create it
@@ -23,9 +23,9 @@ class ActionSequenceDataset(Dataset):
             with open(action_getter_path, 'rb') as f:
                 action_getter = pickle.load(f)
         else:
-            my_bnf_parser = CustomBNFParser()
+            my_bnf_parser = parse_utils.CustomBNFParser()
             _, rules_dict, symbol_names = my_bnf_parser.parse_file(bnf_path, start=lang_grammar_start)
-            action_getter = SimpleTreeActionGetter(rules_dict, symbol_names)
+            action_getter = parse_utils.SimpleTreeActionGetter(rules_dict, symbol_names)
             if action_getter_path:
                 with open(action_getter_path, 'wb') as f:
                     pickle.dump(action_getter, f)
@@ -49,7 +49,7 @@ class ActionSequenceDataset(Dataset):
             with open(text_file_path) as f:
                 # Get parse tree of the text file written in the language defined by the given grammar
                 text_tree = self.parser.parse(f.read(), start=self.start)
-            id_tree = self.action_getter.simple_tree_to_id_tree(SimpleTree.from_lark_tree(text_tree))
+            id_tree = self.action_getter.simple_tree_to_id_tree(parse_utils.SimpleTree.from_lark_tree(text_tree))
             # Get sequence of actions taken by each non-terminal symbol in 'prefix DFS left-to-right' order
             action_sequences = self.action_getter.collect_actions(id_tree)
             if self.action_sequences_dir:
