@@ -119,7 +119,7 @@ class TreeGenerator(nn.Module):
             out = out.squeeze(seq_len_dim_index)
             log_prob = torch.log_softmax(self.action_layer(out), dim=-1)
             action_dist = Categorical(logits=log_prob.masked_fill(
-                self.action_masks[self.non_terminal_ids.index(symbol_id)].logical_not().unsqueeze(0), float('-inf')))
+                self.action_masks[self.non_terminal_ids.index(symbol_id)].bitwise_not().unsqueeze(0), float('-inf')))
             action = action_dist.sample()
             # Get next (state) value
             value = self.value_layer(out).squeeze(-1)

@@ -236,6 +236,8 @@ def train_generator(generator_optimizer, t_max, tree_generator, tree_generator_o
             initial_gen_state, actions, parent_actions, log_probs, values = tree_generator_old(episode_steps)
             truth_log_probs = tree_discriminator(actions, parent_actions)
         rewards = torch.exp(truth_log_probs).select(dim=-1, index=int(True))
+        # Add a penalty for long action sequences
+        rewards = rewards - 0.4
         lt_rewards = td_lambda_returns(rewards, values, gamma, gae_lambda)
         values = values[:-1]
         buffer_step += actions.nelement()
@@ -283,7 +285,7 @@ def train_generator(generator_optimizer, t_max, tree_generator, tree_generator_o
                         generator_optimizer.zero_grad()
                         loss.backward()
                         generator_optimizer.step()
-                        del loss
+                        del loss, policy_loss, entropy_loss, value_loss
 
                     first_episode_in_batch = last_episode_in_batch + 1
                     current_batch_steps = 0
@@ -304,7 +306,10 @@ def tree_gan_evaluate(a_s_dataset, max_total_step, initial_episode_timesteps, fi
                       episode_timesteps_log_order, gamma, gae_lambda, eps_clip, lr, buffer_timestep, lr_decay_order,
                       k_epochs, buffer_to_batch_ratio, optimizer_betas, pre_train_epochs, pre_train_batch_size,
                       discriminator_train_epochs, discriminator_train_batch_size, gan_epochs, num_data_loader_workers=1,
-                      device=torch.device('cpu'), random_seed=None, initial_generator=None, initial_discriminator=None):
+                      device=torch.device('cpu'), random_seed=None, generator_ckp=None, discriminator_ckp=None,
+                      generator_kwargs=None, discriminator_kwargs=None):
+    generator_kwargs = {} if generator_kwargs is None else generator_kwargs
+    discriminator_kwargs = {} if discriminator_kwargs is None else discriminator_kwargs
     batch_timestep = max(buffer_timestep // buffer_to_batch_ratio, 1)
     t_max = (max_total_step - 1) // buffer_timestep + 1
     if random_seed is not None:
@@ -312,17 +317,17 @@ def tree_gan_evaluate(a_s_dataset, max_total_step, initial_episode_timesteps, fi
         np.random.seed(random_seed)
         torch.manual_seed(random_seed)
 
-    tree_gen = tree_generator.TreeGenerator(a_s_dataset.action_getter, action_embedding_size=128).to(
+    tree_gen = tree_generator.TreeGenerator(a_s_dataset.action_getter, **generator_kwargs).to(
         device, non_blocking=True)
-    tree_gen_old = tree_generator.TreeGenerator(a_s_dataset.action_getter, action_embedding_size=128).to(
+    tree_gen_old = tree_generator.TreeGenerator(a_s_dataset.action_getter, **generator_kwargs).to(
         device, non_blocking=True)
-    tree_dis = tree_discriminator.TreeDiscriminator(a_s_dataset.action_getter, action_embedding_size=128).to(
+    tree_dis = tree_discriminator.TreeDiscriminator(a_s_dataset.action_getter, **discriminator_kwargs).to(
         device, non_blocking=True)
 
-    if isinstance(initial_generator, tree_generator.TreeGenerator):
-        tree_gen.load_state_dict(initial_generator.state_dict())
-    if isinstance(initial_discriminator, tree_discriminator.TreeDiscriminator):
-        tree_dis.load_state_dict(initial_discriminator.state_dict())
+    if generator_ckp is not None:
+        tree_gen.load_state_dict(generator_ckp)
+    if discriminator_ckp is not None:
+        tree_dis.load_state_dict(discriminator_ckp)
 
     generator_optimizer = optim.Ranger(tree_gen.parameters(), lr=lr, betas=optimizer_betas)
     discriminator_optimizer = optim.Ranger(tree_dis.parameters(), lr=lr, betas=optimizer_betas)
@@ -334,12 +339,16 @@ def tree_gan_evaluate(a_s_dataset, max_total_step, initial_episode_timesteps, fi
 
     tree_gen_old.load_state_dict(tree_gen.state_dict())
 
-    cos_log_scale = optim.CosineLogAnnealingScale(max(gan_epochs - 1, 1), episode_timesteps_log_order)
+    if gan_epochs > 1:
+        cos_log_scale = optim.CosineLogAnnealingScale(gan_epochs - 1, episode_timesteps_log_order)
+        get_ep_tstep_scale = cos_log_scale.get_scale
+    else:
+        get_ep_tstep_scale = lambda epoch: 0
     episode_reward_lists = []
     # Run main TreeGAN loop
     for epoch in range(gan_epochs):
         episode_timesteps = int(final_episode_timesteps + (
-                initial_episode_timesteps - final_episode_timesteps) * cos_log_scale.get_scale(epoch))
+                initial_episode_timesteps - final_episode_timesteps) * get_ep_tstep_scale(epoch))
 
         episode_reward_list = train_generator(generator_optimizer, t_max, tree_gen, tree_gen_old,
                                               tree_dis, batch_timestep, max_total_step, episode_timesteps,
@@ -350,8 +359,8 @@ def tree_gan_evaluate(a_s_dataset, max_total_step, initial_episode_timesteps, fi
                             episode_timesteps, discriminator_train_epochs, discriminator_train_batch_size, device)
 
     # use every last bit of gradient information (if any left unused)
-    discriminator_optimizer.finalize_steps()
     generator_optimizer.finalize_steps()
+    discriminator_optimizer.finalize_steps()
 
     # Evaluate the quality of action sequences produced by the generator (discriminator perplexity)
     episode_count, total_step, mean_reward = 0, 0, 0.0
