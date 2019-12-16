@@ -154,7 +154,7 @@ class Ranger(Optimizer):
         super().__init__(params, defaults)
 
         # adjustable threshold
-        self.N_sma_threshhold = n_sma_threshold
+        self.n_sma_threshold = n_sma_threshold
         # look ahead params
         self.alpha = alpha
         self.k = k
@@ -215,7 +215,7 @@ class Ranger(Optimizer):
                     N_sma = N_sma_max - 2 * state['step'] * beta2_t / (1 - beta2_t)
                     buffered[1] = N_sma
 
-                    if N_sma > self.N_sma_threshhold:
+                    if N_sma > self.n_sma_threshold:
                         step_size = math.sqrt(
                             (1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (
                                         N_sma_max - 2)) / (1 - beta1 ** state['step'])
@@ -226,7 +226,7 @@ class Ranger(Optimizer):
                 if group['weight_decay'] != 0:
                     p_data_fp32.add_(-group['weight_decay'] * group['lr'], p_data_fp32)
 
-                if N_sma > self.N_sma_threshhold:
+                if N_sma > self.n_sma_threshold:
                     denom = exp_avg_sq.sqrt().add_(group['eps'])
                     p_data_fp32.addcdiv_(-step_size * group['lr'], exp_avg, denom)
                 else:
