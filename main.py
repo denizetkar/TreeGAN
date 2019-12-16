@@ -30,7 +30,8 @@ def main():
 
     # ------------------HYPER PARAMETERS---------------------
     all_params = dict(
-        # HYPER PARAMETERS WITH DEFAULT VALUES: (device, random_seed, initial_generator)
+        # HYPER PARAMETERS WITH DEFAULT VALUES: (device, random_seed, generator_ckp, discriminator_ckp,
+        # generator_kwargs, discriminator_kwargs)
         a_s_dataset=tree_gan.ActionSequenceDataset(reduced_C_bnf_path, reduced_C_lark_path, reduced_C_text_dir,
                                                    reduced_C_action_getter_path, reduced_C_action_sequences_dir),
         generator_ckp=generator_ckp,
